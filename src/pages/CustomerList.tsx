@@ -1,0 +1,100 @@
+import { useState, useEffect } from 'react';
+import { IconRefresh, IconPlus } from '@tabler/icons-react';
+import { Loader2 } from 'lucide-react';
+import { useCustomerStore } from '../store/customerStore';
+import { CustomerTable } from '../components/CustomerTable';
+import Pagination from '../components/Pagination';
+import { CreateCustomerModal } from '../components/CreateCustomerModal';
+import EditCustomerModal from '../components/EditCustomerModal';
+
+export default function CustomerList() {
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [editingCustomerId, setEditingCustomerId] = useState<string | null>(null);
+  const { initialized, loading, pagination, fetchItems } = useCustomerStore();
+
+  // 首次加载处理
+  useEffect(() => {
+    if (!initialized && !loading) {
+      fetchItems();
+    }
+  }, [initialized, loading, fetchItems]);
+
+  const handlePageChange = (page: number) => {
+    fetchItems({ page, limit: pagination.limit });
+  };
+
+  const handleRefresh = () => {
+    fetchItems({
+      page: pagination.page,
+      limit: pagination.limit,
+      force: true // 可选的强制刷新参数
+    });
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* 操作工具栏 */}
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold text-gray-800">Customer Management</h1>
+        <div className="flex space-x-3">
+          <button
+            onClick={handleRefresh}
+            className="flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50"
+          >
+            <IconRefresh className="mr-2 h-4 w-4" />
+            Refresh
+          </button>
+          <button
+            onClick={() => setIsCreateModalOpen(true)}
+            className="flex items-center px-4 py-2 bg-blue-600 rounded-md shadow-sm text-sm font-medium text-white hover:bg-blue-700"
+          >
+            <IconPlus className="mr-2 h-4 w-4" />
+            Add Customer
+          </button>
+        </div>
+      </div>
+
+      {/* 加载中状态显示 Spinner */}
+      {loading ? (
+        <div className="flex justify-center items-center h-40">
+          <Loader2 className="animate-spin w-6 h-6 text-gray-500" />
+          <span className="ml-2 text-gray-500">Loading...</span>
+        </div>
+      ) : (
+        <>
+          {/* 表格区域 */}
+          <CustomerTable onEdit={(id) => setEditingCustomerId(id)} />
+
+          {/* 分页控制 */}
+          <div className="flex justify-center">
+            <Pagination
+              currentPage={pagination.page}
+              totalItems={pagination.total}
+              itemsPerPage={pagination.limit}
+              onPageChange={handlePageChange}
+            />
+          </div>
+        </>
+      )}
+
+      {/* 创建模态框 */}
+      <CreateCustomerModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onSubmitSuccess={handleRefresh}
+      />
+
+      {/* 新增编辑模态框 */}
+      {editingCustomerId && (
+        <EditCustomerModal
+          customerId={editingCustomerId}
+          onClose={() => setEditingCustomerId(null)}
+          onSubmitSuccess={() => {
+            setEditingCustomerId(null);
+            handleRefresh();
+          }}
+        />
+      )}
+    </div>
+  );
+}
