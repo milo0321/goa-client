@@ -11,7 +11,7 @@ export default function Layout() {
         </main>
         <footer className="border-t bg-white py-4">
           <div className="container mx-auto px-4 text-center text-gray-500 text-sm">
-            © {new Date().getFullYear()} Sales Management System
+            © {new Date().getFullYear()} Geteie Sales Management System
           </div>
         </footer>
       </div>

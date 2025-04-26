@@ -10,7 +10,7 @@ import EditCustomerModal from '../components/EditCustomerModal';
 export default function CustomerList() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingCustomerId, setEditingCustomerId] = useState<string | null>(null);
-  const { initialized, loading, pagination, fetchItems } = useCustomerStore();
+  const { initialized, loading, items: customers, pagination, fetchItems, deleteItem } = useCustomerStore();
 
   // 首次加载处理
   useEffect(() => {
@@ -27,8 +27,12 @@ export default function CustomerList() {
     fetchItems({
       page: pagination.page,
       limit: pagination.limit,
-      force: true // 可选的强制刷新参数
+      force: true,
     });
+  };
+
+  const handleDelete = (id: string) => {
+    deleteItem(id).then(() => handleRefresh());
   };
 
   return (
@@ -63,7 +67,11 @@ export default function CustomerList() {
       ) : (
         <>
           {/* 表格区域 */}
-          <CustomerTable onEdit={(id) => setEditingCustomerId(id)} />
+          <CustomerTable
+            data={customers}
+            onEdit={setEditingCustomerId}
+            onDelete={handleDelete}
+          />
 
           {/* 分页控制 */}
           <div className="flex justify-center">
@@ -84,7 +92,7 @@ export default function CustomerList() {
         onSubmitSuccess={handleRefresh}
       />
 
-      {/* 新增编辑模态框 */}
+      {/* 编辑模态框 */}
       {editingCustomerId && (
         <EditCustomerModal
           customerId={editingCustomerId}

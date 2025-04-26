@@ -1,26 +1,27 @@
-import { GenericTable } from './GenericTable';
 import { useCustomerStore } from '../store/customerStore';
+import { GenericTable } from './GenericTable';
 
 interface CustomerTableProps {
-  onEdit: (id: string) => void; // 明确要求传入onEdit
-  // ...其他props...
+  data: Array<{ id: string; name: string; email: string; phone: string }>;
+  onEdit: (id: string) => void;
+  onDelete: (id: string) => void;
 }
 
-export function CustomerTable({onEdit}: CustomerTableProps) {
-  const { items: customers, loading, deleteItem: deleteCustomer, initialized } = useCustomerStore();
+export function CustomerTable({ data, onEdit, onDelete }: CustomerTableProps) {
+  const { loading, initialized } = useCustomerStore();
 
   const headers = [
-    { key: 'name', label: 'Name', width: '30%', align: 'left' },
-    { key: 'email', label: 'Email', width: '30%', align: 'left' },
-    { key: 'phone', label: 'Phone', width: '20%', align: 'left' },
-    { key: 'actions', label: 'Actions', width: '20%', align: 'center' },
+    { key: 'name', label: 'Name', width: '30%', align: 'left' as const },
+    { key: 'email', label: 'Email', width: '30%', align: 'left' as const },
+    { key: 'phone', label: 'Phone', width: '20%', align: 'left' as const },
+    { key: 'actions', label: 'Actions', width: '20%', align: 'center' as const },
   ];
 
   return (
     <GenericTable
       headers={headers}
-      data={customers}
-      loading={loading && !initialized} // 仅初始加载显示 spinner
+      data={data}
+      loading={loading && !initialized}
       emptyMessage="No customers found"
       renderRow={(customer) => (
         <tr key={customer.id}>
@@ -35,16 +36,13 @@ export function CustomerTable({onEdit}: CustomerTableProps) {
           </td>
           <td className="px-6 py-4 whitespace-nowrap text-center">
             <button
-              onClick={() => {
-                console.log('Edit', customer.id);
-                onEdit(customer.id);
-              }}
+              onClick={() => onEdit(customer.id)}
               className="mr-3 text-blue-600 hover:text-blue-900"
             >
               Edit
             </button>
             <button
-              onClick={() => deleteCustomer(customer.id)}
+              onClick={() => onDelete(customer.id)}
               className="text-red-600 hover:text-red-900"
             >
               Delete

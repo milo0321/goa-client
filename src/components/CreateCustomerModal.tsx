@@ -1,4 +1,6 @@
-import CustomerForm from './CustomerForm';
+import { useCustomerStore } from '../store/customerStore';
+import { GenericModal } from './GenericModal';
+import { GenericForm } from './GenericForm';
 
 interface CreateCustomerModalProps {
   isOpen: boolean;
@@ -11,29 +13,36 @@ export function CreateCustomerModal({
   onClose,
   onSubmitSuccess,
 }: CreateCustomerModalProps) {
-  if (!isOpen) return null;
+  const { createItem, loading } = useCustomerStore();
+
+  const fields = [
+    { name: 'name', label: 'Name', type: 'text' as const, required: true },
+    { name: 'email', label: 'Email', type: 'email' as const, required: true },
+    { name: 'phone', label: 'Phone', type: 'tel' as const },
+    { name: 'company', label: 'Company', type: 'text' as const },
+    { name: 'position', label: 'Position', type: 'text' as const },
+    { name: 'address', label: 'Address', type: 'text' as const },
+  ];
+
+  const handleSubmit = async (data: any) => {
+    await createItem(data);
+    onSubmitSuccess?.();
+    onClose();
+  };
 
   return (
-    <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
-        <div className="flex justify-between items-center px-6 py-4 border-b">
-          <h3 className="text-lg font-medium text-gray-900">Create New Customer</h3>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-500 text-2xl w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100"
-          >
-            &times;
-          </button>
-        </div>
-        <div className="p-6">
-          <CustomerForm 
-            onSubmitSuccess={() => {
-              onSubmitSuccess?.();
-              onClose();
-            }} 
-          />
-        </div>
-      </div>
-    </div>
+    <GenericModal
+      isOpen={isOpen}
+      title="Create New Customer"
+      onClose={onClose}
+      isLoading={loading}
+    >
+      <GenericForm
+        fields={fields}
+        onSubmit={handleSubmit}
+        submitText="Create Customer"
+        loading={loading}
+      />
+    </GenericModal>
   );
 }
