@@ -3,17 +3,17 @@ import { useCustomerStore } from '../store/customerStore';
 import { GenericModal } from './GenericModal';
 import { GenericForm } from './GenericForm';
 
-interface EditCustomerModalProps {
+interface CustomerEditModalProps {
   customerId: string;
   onClose: () => void;
   onSubmitSuccess?: () => void;
 }
 
-export default function EditCustomerModal({
+export default function CustomerEditModal({
   customerId,
   onClose,
   onSubmitSuccess,
-}: EditCustomerModalProps) {
+}: CustomerEditModalProps) {
   const { currentItem: currentCustomer, items: customers, setCurrentItem: setCurrentCustomer, updateItem } = useCustomerStore();
 
   useEffect(() => {

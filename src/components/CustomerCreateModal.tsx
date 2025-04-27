@@ -2,17 +2,17 @@ import { useCustomerStore } from '../store/customerStore';
 import { GenericModal } from './GenericModal';
 import { GenericForm } from './GenericForm';
 
-interface CreateCustomerModalProps {
+interface CustomerCreateModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmitSuccess?: () => void;
 }
 
-export function CreateCustomerModal({
+export function CustomerCreateModal({
   isOpen,
   onClose,
   onSubmitSuccess,
-}: CreateCustomerModalProps) {
+}: CustomerCreateModalProps) {
   const { createItem, loading } = useCustomerStore();
 
   const fields = [
