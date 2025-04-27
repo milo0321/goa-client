@@ -2,18 +2,17 @@ import { useState, useEffect } from 'react';
 import { IconRefresh, IconPlus } from '@tabler/icons-react';
 import { Loader2 } from 'lucide-react';
 import { useQuotationStore } from '../store/quotationStore';
-import { GenericTable } from '../components/GenericTable';
+import { QuotationTable } from '../components/QuotationTable';
 import Pagination from '../components/Pagination';
-import { CreateQuotationModal } from '../components/CreateQuotationModal';
-import { QuotationDetailModal } from '../components/QuotationDetailModal';
-import { formatDate } from '../utils/date';
+import { QuotationCreateModal } from '../components/QuotationCreateModal';
+import QuotationEditModal from '../components/QuotationEditModal';
 
 export default function QuotationList() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [selectedQuotationId, setSelectedQuotationId] = useState<string | null>(null);
-  const { initialized, loading, items: quotations, pagination, fetchItems, submitQuotation } = useQuotationStore();
+  const [editingQuotationId, setEditingQuotationId] = useState<string | null>(null);
+  const { initialized, loading, items: quotations, pagination, fetchItems, deleteItem } = useQuotationStore();
 
-  // Initial data fetch
+  // 首次加载处理
   useEffect(() => {
     if (!initialized && !loading) {
       fetchItems();
@@ -32,23 +31,13 @@ export default function QuotationList() {
     });
   };
 
-  const handleSubmitPrice = async (id: string, price: number) => {
-    await submitQuotation(id, price);
-    handleRefresh();
+  const handleDelete = (id: string) => {
+    deleteItem(id).then(() => handleRefresh());
   };
-
-  const headers = [
-    { key: 'customer', label: 'Customer', width: '20%', align: 'left' as const },
-    { key: 'product', label: 'Product', width: '20%', align: 'left' as const },
-    { key: 'quantity', label: 'Quantity', width: '15%', align: 'center' as const },
-    { key: 'status', label: 'Status', width: '15%', align: 'center' as const },
-    { key: 'quotedPrice', label: 'Quoted Price', width: '15%', align: 'right' as const },
-    { key: 'quotedDate', label: 'Quoted Date', width: '15%', align: 'center' as const },
-  ];
 
   return (
     <div className="space-y-6">
-      {/* Toolbar */}
+      {/* 操作工具栏 - 与Customer完全相同的样式 */}
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-gray-800">Quotation Management</h1>
         <div className="flex space-x-3">
@@ -69,7 +58,7 @@ export default function QuotationList() {
         </div>
       </div>
 
-      {/* Loading State */}
+      {/* 加载状态 - 与Customer相同 */}
       {loading ? (
         <div className="flex justify-center items-center h-40">
           <Loader2 className="animate-spin w-6 h-6 text-gray-500" />
@@ -77,53 +66,14 @@ export default function QuotationList() {
         </div>
       ) : (
         <>
-          {/* Quotation Table */}
-          <GenericTable
-            headers={headers}
+          {/* 表格区域 */}
+          <QuotationTable
             data={quotations}
-            loading={loading && !initialized}
-            emptyMessage="No quotations found"
-            renderRow={(quotation) => (
-              <tr
-                key={quotation.id}
-                onClick={() => setSelectedQuotationId(quotation.id)}
-                className="cursor-pointer hover:bg-gray-50"
-              >
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">{quotation.customer?.name}</div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">{quotation.productName}</div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-center">
-                  <div className="text-sm text-gray-500">{quotation.quantity}</div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-center">
-                  <span
-                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      quotation.status === 'pending'
-                        ? 'bg-yellow-100 text-yellow-800'
-                        : 'bg-green-100 text-green-800'
-                    }`}
-                  >
-                    {quotation.status}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right">
-                  <div className="text-sm text-gray-500">
-                    {quotation.quotedPrice ? `$${quotation.quotedPrice}` : '-'}
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-center">
-                  <div className="text-sm text-gray-500">
-                    {quotation.quotedDate ? formatDate(quotation.quotedDate) : '-'}
-                  </div>
-                </td>
-              </tr>
-            )}
+            onEdit={setEditingQuotationId}
+            onDelete={handleDelete}
           />
 
-          {/* Pagination */}
+          {/* 分页控制 - 复用相同组件 */}
           <div className="flex justify-center">
             <Pagination
               currentPage={pagination.page}
@@ -135,19 +85,22 @@ export default function QuotationList() {
         </>
       )}
 
-      {/* Create Quotation Modal */}
-      <CreateQuotationModal
+      {/* 创建模态框 */}
+      <QuotationCreateModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         onSubmitSuccess={handleRefresh}
       />
 
-      {/* Quotation Detail Modal */}
-      {selectedQuotationId && (
-        <QuotationDetailModal
-          quotationId={selectedQuotationId}
-          onClose={() => setSelectedQuotationId(null)}
-          onSubmit={handleSubmitPrice}
+      {/* 编辑模态框 */}
+      {editingQuotationId && (
+        <QuotationEditModal
+          quotationId={editingQuotationId}
+          onClose={() => setEditingQuotationId(null)}
+          onSubmitSuccess={() => {
+            setEditingQuotationId(null);
+            handleRefresh();
+          }}
         />
       )}
     </div>

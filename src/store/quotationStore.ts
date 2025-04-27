@@ -1,12 +1,25 @@
 import { create } from 'zustand';
 import * as api from '../api/quotation';
 import { createResourceStore } from '../lib/createResourceStore';
-import { Quotation, CreateQuotation, UpdateQuotation } from '../types/quotation';
+import { 
+  Quotation, 
+  CreateQuotation, 
+  UpdateQuotation,
+  QuantityTier,
+  AdditionalFee
+} from '../types/quotation';
 import { ResourceStore } from '../types/base';
 import { StateCreator } from 'zustand/vanilla';
 
 type QuotationStore = ResourceStore<Quotation> & {
-  submitQuotation: (id: string, price: number) => Promise<void>;
+  submitQuotation: (id: string, priceData: {
+    quantityTiers: QuantityTier[];
+    additionalFees?: AdditionalFee[];
+  }) => Promise<void>;
+  calculatePrice: (params: {
+    quantity: number;
+    shippingMethod: 'air' | 'ship';
+  }) => Promise<number>;
 };
 
 const quotationStoreCreator: StateCreator<
@@ -15,32 +28,44 @@ const quotationStoreCreator: StateCreator<
   [],
   QuotationStore
 > = (set, get, apiStore) => {
-  return {
-    ...createResourceStore<Quotation, CreateQuotation, UpdateQuotation>({
-      fetchAll: api.fetchQuotations,
-      fetchOne: api.getQuotation,
-      create: api.createQuotation,
-      update: api.updateQuotation,
-      delete: api.deleteQuotation
-    })(set, get, apiStore),
+  const baseStore = createResourceStore<Quotation, CreateQuotation, UpdateQuotation>({
+    fetchAll: api.fetchQuotations,
+    fetchOne: api.getQuotation,
+    create: api.createQuotation,
+    update: api.updateQuotation,
+    delete: api.deleteQuotation
+  })(set, get, apiStore);
 
-    submitQuotation: async (id: string, price: number) => {
+  return {
+    ...baseStore,
+
+    // 提交报价（带多阶梯价格）
+    submitQuotation: async (id, { quantityTiers, additionalFees }) => {
       set({ loading: true, error: null });
       try {
-        const updated = await api.submitQuotation(id, price);
-        const state = get();
+        const updated = await api.submitQuotation(id, { 
+          quantityTiers,
+          additionalFees,
+          status: 'quoted' 
+        });
         set({
-          items: state.items.map((q) => (q.id === id ? updated : q)),
-          currentItem: state.currentItem?.id === id ? updated : state.currentItem,
-          loading: false,
+          items: get().items.map(q => q.id === id ? updated : q),
+          currentItem: updated,
+          loading: false
         });
       } catch (err) {
         set({
-          error: err instanceof Error ? err.message : 'Submit failed',
-          loading: false,
+          error: err instanceof Error ? err.message : 'Submission failed',
+          loading: false
         });
         throw err;
       }
+    },
+
+    // 价格计算逻辑
+    calculatePrice: async ({ quantity, shippingMethod }) => {
+      const res = await api.calculatePrice({ quantity, shippingMethod });
+      return res.price;
     }
   };
 };

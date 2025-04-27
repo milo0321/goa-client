@@ -4,34 +4,75 @@ import {
     createEntity,
     updateEntity,
     deleteEntity
-} from './client';
-import {
+  } from './client';
+  import {
     Quotation,
     CreateQuotation,
     UpdateQuotation,
-    QuotationPaginationParams
-} from '../types/quotation';
-
-const ENDPOINT = '/quotations';
-
-export const fetchQuotations = (
-    params?: QuotationPaginationParams
-) => fetchEntities<Quotation>(ENDPOINT, params);
-
-export const getQuotation = (id: string) =>
+    QuotationPaginationParams,
+    QuantityTier,
+    AdditionalFee
+  } from '../types/quotation';
+  
+  const ENDPOINT = '/quotations';
+  
+  // 获取报价单列表（带分页）
+  export const fetchQuotations = (params?: QuotationPaginationParams) => 
+    fetchEntities<Quotation>(ENDPOINT, params);
+  
+  // 获取单个报价单详情
+  export const getQuotation = (id: string) => 
     fetchEntity<Quotation>(`${ENDPOINT}/${id}`);
-
-export const createQuotation = (data: CreateQuotation) =>
-    createEntity<Quotation, CreateQuotation>(ENDPOINT, data);
-
-export const updateQuotation = (id: string, data: UpdateQuotation) =>
+  
+  // 创建报价单（支持多阶梯和附加费用）
+  export const createQuotation = (data: CreateQuotation) => 
+    createEntity<Quotation, CreateQuotation>(ENDPOINT, {
+      ...data,
+      status: 'draft' // 自动设置初始状态
+    });
+  
+  // 更新报价单基础信息
+  export const updateQuotation = (id: string, data: UpdateQuotation) => 
     updateEntity<Quotation, UpdateQuotation>(`${ENDPOINT}/${id}`, data);
-
-export const submitQuotation = (id: string, price: number) =>
-    updateEntity<Quotation, { quotedPrice: number }>(
-        `${ENDPOINT}/${id}/submit`,
-        { quotedPrice: price }
+  
+  // 提交报价（完整报价方案）
+  export const submitQuotation = (
+    id: string, 
+    data: {
+      quantityTiers: QuantityTier[];
+      additionalFees?: AdditionalFee[];
+    }
+  ) => updateEntity<Quotation, {
+    quantityTiers: QuantityTier[];
+    additionalFees?: AdditionalFee[];
+    status: 'quoted';
+    quotedDate: string;
+  }>(`${ENDPOINT}/${id}/submit`, {
+    ...data,
+    status: 'quoted',
+    quotedDate: new Date().toISOString()
+  });
+  
+  // 价格计算服务
+  export const calculatePrice = (params: {
+    productId?: string;
+    quantity: number;
+    shippingMethod: 'air' | 'ship';
+  }) => {
+    return updateEntity<{ 
+      price: number; 
+      currency: string 
+    }, typeof params>(
+      `${ENDPOINT}/calculate-price`, 
+      params
     );
-
-export const deleteQuotation = (id: string) =>
+  };
+  
+  // 删除报价单
+  export const deleteQuotation = (id: string) => 
     deleteEntity(`${ENDPOINT}/${id}`);
+  
+  // 导出报价单为PDF
+  export const exportQuotation = (id: string) => {
+    return fetchEntity<{ url: string }>(`${ENDPOINT}/${id}/export`);
+  };

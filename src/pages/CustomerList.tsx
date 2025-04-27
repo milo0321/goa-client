@@ -4,8 +4,8 @@ import { Loader2 } from 'lucide-react';
 import { useCustomerStore } from '../store/customerStore';
 import { CustomerTable } from '../components/CustomerTable';
 import Pagination from '../components/Pagination';
-import { CreateCustomerModal } from '../components/CreateCustomerModal';
-import EditCustomerModal from '../components/EditCustomerModal';
+import { CustomerCreateModal } from '../components/CustomerCreateModal';
+import CustomerEditModal from '../components/CustomerEditModal';
 
 export default function CustomerList() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -86,7 +86,7 @@ export default function CustomerList() {
       )}
 
       {/* 创建模态框 */}
-      <CreateCustomerModal
+      <CustomerCreateModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         onSubmitSuccess={handleRefresh}
@@ -94,7 +94,7 @@ export default function CustomerList() {
 
       {/* 编辑模态框 */}
       {editingCustomerId && (
-        <EditCustomerModal
+        <CustomerEditModal
           customerId={editingCustomerId}
           onClose={() => setEditingCustomerId(null)}
           onSubmitSuccess={() => {
