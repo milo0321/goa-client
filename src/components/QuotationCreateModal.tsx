@@ -32,7 +32,7 @@ export function QuotationCreateModal({
   ]);
 
   const [additionalFees, setAdditionalFees] = useState<
-    Array<{ type: string; amount: number; refundable: boolean; conditions?: string }>
+    Array<{ feeType: string; amount: number; refundable: boolean; conditions?: string }>
   >([]);
 
   // 处理基础字段变更
@@ -171,10 +171,10 @@ export function QuotationCreateModal({
             <div key={index} className="grid grid-cols-12 gap-4 mb-4">
               <div className="col-span-3">
                 <Select
-                  value={fee.type}
+                  value={fee.feeType}
                   onChange={v => {
                     const newFees = [...additionalFees];
-                    newFees[index].type = v;
+                    newFees[index].feeType = v;
                     setAdditionalFees(newFees);
                   }}
                   options={[
@@ -225,7 +225,7 @@ export function QuotationCreateModal({
             type="dashed"
             icon={<IconPlus size={16} />}
             onClick={() => setAdditionalFees([...additionalFees, 
-              { type: 'sampling', amount: 0, refundable: false }
+              { feeType: 'sampling', amount: 0, refundable: false }
             ])}
           >
             Add Fee

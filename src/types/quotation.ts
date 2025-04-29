@@ -17,7 +17,7 @@ export interface QuantityTier {
 
 // 附加费用
 export interface AdditionalFee {
-  type: 'sampling' | 'mold' | 'certification' | string; // 费用类型
+  feeType: 'sampling' | 'mold' | 'certification' | string; // 费用类型
   amount: number;                     // 金额
   refundable: boolean;                // 是否可返还
   conditions?: string;                // 返还条件（如"order >10000pcs"）
@@ -79,4 +79,4 @@ export type {
 
 // 实用类型
 export type ShippingMethod = ShippingPrice['method'];
-export type FeeType = AdditionalFee['type'];
+export type FeeType = AdditionalFee['feeType'];

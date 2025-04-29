@@ -20,7 +20,7 @@ export function GenericModal({
 
   return (
     <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl">
         <div className="flex justify-between items-center px-6 py-4 border-b">
           <h3 className="text-lg font-medium text-gray-900">{title}</h3>
           <button

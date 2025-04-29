@@ -223,10 +223,10 @@ export default function QuotationEditModal({
             <div key={index} className="grid grid-cols-12 gap-4 mb-4">
               <div className="col-span-3">
                 <Select
-                  value={fee.type}
+                  value={fee.feeType}
                   onChange={value => {
                     const newFees = [...additionalFees];
-                    newFees[index].type = value;
+                    newFees[index].feeType = value;
                     setAdditionalFees(newFees);
                   }}
                   options={[
@@ -297,7 +297,7 @@ export default function QuotationEditModal({
             icon={<IconPlus size={16} />}
             onClick={() => setAdditionalFees([
               ...additionalFees, 
-              { type: 'sampling', amount: 0, refundable: false }
+              { feeType: 'sampling', amount: 0, refundable: false }
             ])}
           >
             Add Fee
