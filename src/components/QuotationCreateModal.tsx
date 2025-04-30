@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import dayjs from 'dayjs'; // 需要安装dayjs
 import { useCustomerStore } from '../store/customerStore';
 import { useQuotationStore } from '../store/quotationStore';
@@ -17,8 +17,8 @@ export function QuotationCreateModal({
   onClose,
   onSubmitSuccess,
 }: QuotationCreateModalProps) {
-  const { items: customers } = useCustomerStore();
-  const { createItem, loading } = useQuotationStore();
+  const { items: customers, loading: customerLoading, fetchItems: fetchCustomers } = useCustomerStore();
+  const { createItem, loading: quotationLoading } = useQuotationStore();
 
   // 表单状态管理
   const [formData, setFormData] = useState({
@@ -72,12 +72,19 @@ export function QuotationCreateModal({
     }
   };
 
+  // 确保加载客户列表
+  useEffect(() => {
+    if (!customers.length && !customerLoading) {
+      fetchCustomers(); // 初始化加载客户
+    }
+  }, [customers, customerLoading, fetchCustomers]);
+
   return (
     <GenericModal
       isOpen={isOpen}
       title="Create New Quotation"
       onClose={onClose}
-      isLoading={loading}
+      isLoading={quotationLoading || customerLoading}
     >
       <div className="space-y-6">
         {/* 基础信息 */}
@@ -267,7 +274,7 @@ export function QuotationCreateModal({
           <Button
             type="primary"
             onClick={handleSubmit}
-            loading={loading}
+            loading={quotationLoading || customerLoading}
           >
             Create Quotation
           </Button>

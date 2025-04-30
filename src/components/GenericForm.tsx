@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import ErrorMessage from './ErrorMessage';
+import { Button, DatePicker } from 'antd';
+import dayjs from 'dayjs';
 
 interface FormField {
   name: string;
   label: string;
-  type: 'text' | 'email' | 'tel' | 'number' | 'textarea' | 'select';
+  type: 'text' | 'email' | 'tel' | 'number' | 'textarea' | 'select' | 'date';
   options?: { value: string; label: string }[];
   required?: boolean;
   min?: number;
@@ -17,6 +19,7 @@ interface GenericFormProps<T> {
   onSubmit: (data: T) => Promise<void>;
   submitText?: string;
   loading?: boolean;
+  children?: React.ReactNode;
 }
 
 export function GenericForm<T>({
@@ -25,6 +28,7 @@ export function GenericForm<T>({
   onSubmit,
   submitText = 'Submit',
   loading = false,
+  children,
 }: GenericFormProps<T>) {
   const [formData, setFormData] = useState<T>(initialData || {} as T);
   const [error, setError] = useState<string | null>(null);
@@ -37,11 +41,26 @@ export function GenericForm<T>({
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleDateChange = (date: any, name: string) => {
+    setFormData((prev) => ({ ...prev, [name]: date }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    // 在提交前统一格式化日期字段
+    const formattedData = { ...formData };
+
+    // 查找所有日期字段并格式化
+    fields.forEach(field => {
+      if (field.type === 'date' && formattedData[field.name]) {
+        formattedData[field.name] = dayjs(formattedData[field.name]).toISOString();
+      }
+    });
+
     try {
-      await onSubmit(formData);
+      await onSubmit(formattedData);
     } catch (err) {
       setError('Failed to save data. Please try again.');
     }
@@ -79,6 +98,15 @@ export function GenericForm<T>({
                 </option>
               ))}
             </select>
+          ) : field.type === 'date' ? (
+            <DatePicker
+              id={field.name}
+              value={dayjs((formData as any)[field.name])}  // Handle date value conversion
+              onChange={(date) => handleDateChange(date, field.name)}
+              className="mt-1 block w-full border border-gray-300 rounded-md p-2"
+              format="YYYY-MM-DD"
+              required={field.required}
+            />
           ) : (
             <input
               type={field.type}
@@ -93,13 +121,16 @@ export function GenericForm<T>({
           )}
         </div>
       ))}
-      <button
-        type="submit"
-        disabled={loading}
-        className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:bg-gray-400"
-      >
-        {loading ? 'Processing...' : submitText}
-      </button>
+      {children}
+      <div className="flex justify-end mt-4">
+        <Button
+          type="primary"
+          htmlType="submit"
+          loading={loading}
+        >
+          {submitText}
+        </Button>
+      </div>
     </form>
   );
 }

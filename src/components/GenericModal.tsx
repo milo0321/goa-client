@@ -5,7 +5,7 @@ interface GenericModalProps {
   isOpen: boolean;
   title: string;
   onClose: () => void;
-  children: ReactNode;
+  children?: ReactNode;
   isLoading?: boolean;
 }
 
