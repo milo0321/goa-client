@@ -15,7 +15,12 @@ interface QuotationTableProps {
   onQuote: (id: string) => void;
 }
 
-export function QuotationTable({ data, onEdit, onDelete, onQuote }: QuotationTableProps) {
+export function QuotationTable({
+  data,
+  onEdit,
+  onDelete,
+  onQuote
+}: QuotationTableProps) {
   const { loading, initialized } = useQuotationStore();
 
   const headers = [
@@ -39,9 +44,9 @@ export function QuotationTable({ data, onEdit, onDelete, onQuote }: QuotationTab
       .map(t => t.quantity)
       .filter(q => q > 0) // 过滤掉0值
       .sort((a, b) => a - b); // 从小到大排序
-    
-    return quantities.length > 0 
-      ? quantities.join(', ') 
+
+    return quantities.length > 0
+      ? quantities.join(', ')
       : '-';
   };
 

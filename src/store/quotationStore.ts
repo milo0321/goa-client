@@ -46,7 +46,6 @@ const quotationStoreCreator: StateCreator<
         const updated = await api.submitQuotation(id, { 
           quantityTiers,
           additionalFees,
-          status: 'quoted' 
         });
         set({
           items: get().items.map(q => q.id === id ? updated : q),

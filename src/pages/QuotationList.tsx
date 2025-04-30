@@ -4,14 +4,14 @@ import { Loader2 } from 'lucide-react';
 import { useQuotationStore } from '../store/quotationStore';
 import { QuotationTable } from '../components/QuotationTable';
 import Pagination from '../components/Pagination';
-import { QuotationCreateModal } from '../components/QuotationCreateModal';
+import QuotationCreateModal from '../components/QuotationCreateModal';
 import QuotationEditModal from '../components/QuotationEditModal';
-import { QuotationQuoteModal } from '../components/QuotationQuoteModal'
+import QuotationQuoteModal from '../components/QuotationQuoteModal'
 
 export default function QuotationList() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingQuotationId, setEditingQuotationId] = useState<string | null>(null);
-  const [selectedInquiry, setSelectedInquiry] = useState<string | null>(null);
+  const [quoteQuotationId, setQuoteQuotationId] = useState<string | null>(null);
   const { initialized, loading, items: quotations, pagination, fetchItems, deleteItem } = useQuotationStore();
 
   // 首次加载处理
@@ -36,11 +36,6 @@ export default function QuotationList() {
   const handleDelete = (id: string) => {
     deleteItem(id).then(() => handleRefresh());
   };
-
-  const findInquiryById = (quotationId: string) => {
-    const quotation = quotations.find(q => q.id === quotationId);
-    return quotation;
-  }
 
   return (
     <div className="space-y-6">
@@ -76,7 +71,7 @@ export default function QuotationList() {
           {/* 表格区域 */}
           <QuotationTable
             data={quotations}
-            onQuote={setSelectedInquiry}
+            onQuote={setQuoteQuotationId}
             onEdit={setEditingQuotationId}
             onDelete={handleDelete}
           />
@@ -112,18 +107,17 @@ export default function QuotationList() {
         />
       )}
 
-      {selectedInquiry && (
+      {/* 询价模态框 */}
+      {quoteQuotationId && (
         <QuotationQuoteModal
-          inquiryData={findInquiryById(selectedInquiry)}
-          isOpen={true}
-          onClose={() => setSelectedInquiry(null)}
-          onSubmit={() => {
-            setSelectedInquiry(null);
+          quotationId={quoteQuotationId}
+          onClose={() => setQuoteQuotationId(null)}
+          onSubmitSuccess={() => {
+            setQuoteQuotationId(null);
             handleRefresh();
           }}
         />
       )}
-
     </div>
   );
 }

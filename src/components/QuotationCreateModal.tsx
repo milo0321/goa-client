@@ -12,7 +12,7 @@ interface QuotationCreateModalProps {
   onSubmitSuccess?: () => void;
 }
 
-export function QuotationCreateModal({
+export default function QuotationCreateModal({
   isOpen,
   onClose,
   onSubmitSuccess,

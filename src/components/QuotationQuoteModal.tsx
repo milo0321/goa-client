@@ -1,168 +1,162 @@
-// QuotationQuoteModal.tsx
-import { useState } from 'react';
-import dayjs from 'dayjs';
-import { DatePicker } from 'antd';
-import { Button, Input, Select, Form } from 'antd';
+import { useEffect, useState } from 'react';
+import { useCustomerStore } from '../store/customerStore';
+import { useQuotationStore } from '../store/quotationStore';
+import { GenericForm } from './GenericForm';
 import { GenericModal } from './GenericModal';
+import { notification } from 'antd';
+import { QuantityTier, AdditionalFee } from '../types/quotation';
+import { QuantityTiers } from './QuantityTier';
+import { AdditionalFees } from './AdditionalFees';
 
 interface QuotationQuoteModalProps {
-  inquiryData: {
-    id: string;
-    customerName: string,
-    productName: string,
-    inquiryDate: string,
-    quantityTiers: Array<{ quantity: number }>;
-  };
-  isOpen: boolean;
+  quotationId: string;
   onClose: () => void;
-  onSubmit: (quoteData: QuoteFormData) => Promise<void>;
+  onSubmitSuccess?: () => void;
 }
 
-interface QuoteFormData {
-  sampleTime: string;
-  massTime: string;
-  packing: string;
-  quantityTiers: Array<{
-    quantity: number;
-    airPrice: number;
-    shipPrice: number;
-  }>;
-  additionalFees: Array<{
-    feeType: string;
-    amount: number;
-    refundable: boolean;
-    conditions?: string;
-  }>;
-}
-
-export function QuotationQuoteModal({
-  inquiryData,
-  isOpen,
+export default function QuotationQuoteModal({
+  quotationId,
   onClose,
-  onSubmit,
+  onSubmitSuccess,
 }: QuotationQuoteModalProps) {
-  const [form] = Form.useForm();
-  const [loading, setLoading] = useState(false);
+  const {
+    currentItem: currentQuotation,
+    items: quotations,
+    setCurrentItem: setCurrentQuotation,
+    updateItem,
+    calculatePrice
+  } = useQuotationStore();
 
-  const initialValues = {
-    quantityTiers: inquiryData.quantityTiers.map(t => ({
-      ...t,
-      airPrice: 0,
-      shipPrice: 0
-    })),
-    additionalFees: [],
-    packing: 'standard',
-  };
+  const {
+    items: customers,
+    fetchItems: fetchCustomers,
+    loading: customerLoading
+  } = useCustomerStore();
 
-  const handleSubmit = async () => {
+  const [quantityTiers, setQuantityTiers] = useState<QuantityTier[]>([]);
+  const [additionalFees, setAdditionalFees] = useState<AdditionalFee[]>([]);
+  const [loadingPrices, setLoadingPrices] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    if (!customers.length && !customerLoading) {
+      fetchCustomers();
+    }
+
+    const quotation = quotations.find(q => q.id === quotationId);
+    if (quotation) {
+      setCurrentQuotation(quotation);
+      setQuantityTiers(quotation.quantityTiers || []);
+      setAdditionalFees(quotation.additionalFees || []);
+    }
+  }, [quotationId, quotations, customers, customerLoading, fetchCustomers, setCurrentQuotation]);
+
+  const handlePriceCalculation = async (tierIndex: number, method: 'air' | 'ship') => {
+    const tier = quantityTiers[tierIndex];
+    if (!tier?.quantity) return;
+
+    setLoadingPrices(prev => ({ ...prev, [`${tierIndex}-${method}`]: true }));
+
     try {
-      setLoading(true);
-      const values = await form.validateFields();
-      await onSubmit({
-        ...values,
-        sampleTime: dayjs(values.sampleTime).format('YYYY-MM-DD'),
-        massTime: dayjs(values.massTime).format('YYYY-MM-DD'),
+      const price = await calculatePrice({
+        quantity: tier.quantity,
+        shippingMethod: method
       });
-      onClose();
+
+      const updatedTiers = [...quantityTiers];
+      const priceIndex = updatedTiers[tierIndex].prices.findIndex(p => p.method === method);
+
+      if (priceIndex >= 0) {
+        updatedTiers[tierIndex].prices[priceIndex].unitPrice = price;
+      } else {
+        updatedTiers[tierIndex].prices.push({
+          method,
+          unitPrice: price,
+          currency: 'USD'
+        });
+      }
+
+      setQuantityTiers(updatedTiers);
+    } catch (err) {
+      notification.error({
+        message: 'Price calculation failed',
+        description: err instanceof Error ? err.message : String(err)
+      });
     } finally {
-      setLoading(false);
+      setLoadingPrices(prev => ({ ...prev, [`${tierIndex}-${method}`]: false }));
     }
   };
 
+  const handleSubmit = async (baseData: {
+    productName: string;
+    customerId: string;
+    inquiryDate: string;
+    sampleProductionTime?: string;
+    massProductionTime?: string;
+    packingMethod?: string;
+    notes?: string;
+  }) => {
+    try {
+      await updateItem(quotationId, {
+        ...baseData,
+        status: 'quoted', // 强制标记为 quoted
+        quantityTiers,
+        additionalFees
+      });
+      notification.success({ message: 'Quotation submitted successfully!' });
+      onSubmitSuccess?.();
+      onClose();
+    } catch (err) {
+      notification.error({
+        message: 'Submit failed',
+        description: err instanceof Error ? err.message : String(err)
+      });
+    }
+  };
+
+  if (!currentQuotation || currentQuotation.id !== quotationId) {
+    return <GenericModal isOpen title="Quote Quotation" onClose={onClose} isLoading />;
+  }
+
+  const baseFields = [
+    { name: 'productName', label: 'Product Name', type: 'text' as const, required: true },
+    { name: 'customerId', label: 'Customer', type: 'select' as const, options: customers.map(c => ({ value: c.id, label: c.name })), required: true },
+    { name: 'inquiryDate', label: 'Inquiry Date', type: 'date' as const, required: true },
+    { name: 'sampleProductionTime', label: 'Sample Production Time', type: 'text' as const, placeholder: 'e.g. 3-5 days' },
+    { name: 'massProductionTime', label: 'Mass Production Time', type: 'text' as const, placeholder: 'e.g. 10-15 days' },
+    { name: 'packingMethod', label: 'Packing Method', type: 'textarea' as const, placeholder: 'Detailed packing instructions...' },
+    {
+      name: 'notes', label: 'Notes', type: 'textarea' as const, attrs: {
+        rows: 10, // 控制初始高度
+        style: { resize: 'vertical', minHeight: '80px', overflow: 'hidden' },
+        onInput: (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+          e.target.style.height = 'auto';
+          e.target.style.height = `${e.target.scrollHeight}px`;
+        }
+      }
+    }
+  ];
+
   return (
-    <GenericModal
-      isOpen={isOpen}
-      title={`Quote for ${inquiryData.productName} from ${inquiryData.customerName} in ${inquiryData.inquiryDate}`}
-      onClose={onClose}
-      isLoading={loading}
-    >
-      <Form form={form} initialValues={initialValues} layout="vertical">
-        {/* 时间信息 */}
-        <div className="grid grid-cols-2 gap-4 mb-6">
-          <Form.Item
-            label="Sample Production Time"
-            name="sampleTime"
-            rules={[{ required: true }]}
-          >
-            <DatePicker className="w-full" />
-          </Form.Item>
-
-          <Form.Item
-            label="Mass Production Time"
-            name="massTime"
-            rules={[{ required: true }]}
-          >
-            <DatePicker className="w-full" />
-          </Form.Item>
-        </div>
-
-        {/* 包装信息 */}
-        <Form.Item label="Packing Method" name="packing">
-          <Select
-            options={[
-              { value: 'standard', label: 'Standard' },
-              { value: 'export', label: 'Export' },
-              { value: 'custom', label: 'Custom' },
-            ]}
+    <GenericModal isOpen title="Quote Quotation" onClose={onClose}>
+      <div className="max-h-[80vh] overflow-y-auto space-y-6">
+        <GenericForm
+          initialData={currentQuotation}
+          fields={baseFields}
+          onSubmit={handleSubmit}
+          submitText="Submit Quotation"
+        >
+          <QuantityTiers
+            quantityTiers={quantityTiers}
+            setQuantityTiers={setQuantityTiers}
+            loadingPrices={loadingPrices}
+            handlePriceCalculation={handlePriceCalculation}
           />
-        </Form.Item>
-
-        {/* 价格阶梯 */}
-        <div className="border rounded p-4 mb-6">
-          <h3 className="font-medium mb-4">Price Tiers</h3>
-          <Form.List name="quantityTiers">
-            {(fields) => (
-              <>
-                {fields.map(({ key, name, ...restField }) => (
-                  <div key={key} className="grid grid-cols-12 gap-4 mb-4">
-                    <div className="col-span-3">
-                      <Form.Item
-                        {...restField}
-                        name={[name, 'quantity']}
-                        label="Quantity"
-                      >
-                        <Input disabled />
-                      </Form.Item>
-                    </div>
-                    <div className="col-span-3">
-                      <Form.Item
-                        {...restField}
-                        name={[name, 'airPrice']}
-                        label="Air Price"
-                        rules={[{ required: true }]}
-                      >
-                        <Input type="number" prefix="$" />
-                      </Form.Item>
-                    </div>
-                    <div className="col-span-3">
-                      <Form.Item
-                        {...restField}
-                        name={[name, 'shipPrice']}
-                        label="Ship Price"
-                        rules={[{ required: true }]}
-                      >
-                        <Input type="number" prefix="$" />
-                      </Form.Item>
-                    </div>
-                  </div>
-                ))}
-              </>
-            )}
-          </Form.List>
-        </div>
-
-        {/* 附加费用（保持原有逻辑） */}
-        {/* 提交按钮 */}
-        <div className="flex justify-end">
-          <Button
-            type="primary"
-            onClick={handleSubmit}
-            loading={loading}
-          >
-            Submit Quote
-          </Button>
-        </div>
-      </Form>
+          <AdditionalFees
+            additionalFees={additionalFees}
+            setAdditionalFees={setAdditionalFees}
+          />
+        </GenericForm>
+      </div>
     </GenericModal>
   );
 }

@@ -134,7 +134,7 @@ export default function QuotationEditModal({
       title="Edit Quotation"
       onClose={onClose}
     >
-      <div className="space-y-6">
+      <div className="max-h-[80vh] overflow-y-auto space-y-6">
         {/* 基础信息表单 */}
         <GenericForm
           initialData={currentQuotation}
