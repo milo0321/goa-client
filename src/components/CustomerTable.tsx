@@ -25,13 +25,13 @@ export function CustomerTable({ data, onEdit, onDelete }: CustomerTableProps) {
       emptyMessage="No customers found"
       renderRow={(customer) => (
         <tr key={customer.id}>
-          <td className="px-6 py-4 whitespace-nowrap">
+          <td className="px-6 py-4 whitespace-nowrap text-left">
             <div className="text-sm font-medium text-gray-900">{customer.name}</div>
           </td>
-          <td className="px-6 py-4 whitespace-nowrap">
+          <td className="px-6 py-4 whitespace-nowrap text-left">
             <div className="text-sm text-gray-500">{customer.email}</div>
           </td>
-          <td className="px-6 py-4 whitespace-nowrap">
+          <td className="px-6 py-4 whitespace-nowrap text-left">
             <div className="text-sm text-gray-500">{customer.phone}</div>
           </td>
           <td className="px-6 py-4 whitespace-nowrap text-center">

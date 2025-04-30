@@ -1,8 +1,9 @@
 import { useState } from 'react';
+import dayjs from 'dayjs'; // 需要安装dayjs
 import { useCustomerStore } from '../store/customerStore';
 import { useQuotationStore } from '../store/quotationStore';
 import { GenericModal } from './GenericModal';
-import { Button, Input, Select, Checkbox } from 'antd';
+import { Button, Input, Select, Checkbox, DatePicker } from 'antd';
 import { IconPlus, IconTrash, IconPlane, IconShip } from '@tabler/icons-react';
 
 interface QuotationCreateModalProps {
@@ -18,13 +19,15 @@ export function QuotationCreateModal({
 }: QuotationCreateModalProps) {
   const { items: customers } = useCustomerStore();
   const { createItem, loading } = useQuotationStore();
-  
+
   // 表单状态管理
   const [formData, setFormData] = useState({
     customerId: '',
     productName: '',
     quantityType: 'single' as 'single' | 'multiple',
-    notes: ''
+    notes: '',
+    inquiryDate: dayjs(), //默认当前日期
+    status: 'quoted' as 'quoted' | 'draft' // 添加状态字段
   });
 
   const [quantityTiers, setQuantityTiers] = useState([
@@ -38,6 +41,13 @@ export function QuotationCreateModal({
   // 处理基础字段变更
   const handleBaseChange = (field: string, value: string | number) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  // 处理日期变更
+  const handleDateChange = (date: dayjs.Dayjs | null) => {
+    if (date) {
+      setFormData(prev => ({ ...prev, inquiryDate: date }));
+    }
   };
 
   // 提交处理
@@ -54,7 +64,7 @@ export function QuotationCreateModal({
         })),
         additionalFees
       });
-      
+
       onSubmitSuccess?.();
       onClose();
     } catch (error) {
@@ -80,12 +90,22 @@ export function QuotationCreateModal({
               onChange={v => handleBaseChange('customerId', v)}
             />
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium mb-1">Product Name</label>
             <Input
               value={formData.productName}
               onChange={e => handleBaseChange('productName', e.target.value)}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">Inquiry Date</label>
+            <DatePicker
+              className="w-full"
+              value={formData.inquiryDate}
+              onChange={handleDateChange}
+              format="YYYY-MM-DD"
             />
           </div>
         </div>
@@ -166,7 +186,7 @@ export function QuotationCreateModal({
         {/* 附加费用 */}
         <div className="border rounded p-4">
           <h3 className="font-medium mb-4">Additional Fees</h3>
-          
+
           {additionalFees.map((fee, index) => (
             <div key={index} className="grid grid-cols-12 gap-4 mb-4">
               <div className="col-span-3">
@@ -184,7 +204,7 @@ export function QuotationCreateModal({
                   ]}
                 />
               </div>
-              
+
               <div className="col-span-3">
                 <Input
                   type="number"
@@ -197,7 +217,7 @@ export function QuotationCreateModal({
                   prefix="$"
                 />
               </div>
-              
+
               <div className="col-span-3 flex items-center">
                 <Checkbox
                   checked={fee.refundable}
@@ -210,7 +230,7 @@ export function QuotationCreateModal({
                   Refundable
                 </Checkbox>
               </div>
-              
+
               <div className="col-span-3">
                 <Button
                   danger
@@ -224,8 +244,8 @@ export function QuotationCreateModal({
           <Button
             type="dashed"
             icon={<IconPlus size={16} />}
-            onClick={() => setAdditionalFees([...additionalFees, 
-              { feeType: 'sampling', amount: 0, refundable: false }
+            onClick={() => setAdditionalFees([...additionalFees,
+            { feeType: 'sampling', amount: 0, refundable: false }
             ])}
           >
             Add Fee
@@ -244,8 +264,8 @@ export function QuotationCreateModal({
 
         {/* 提交按钮 */}
         <div className="flex justify-end">
-          <Button 
-            type="primary" 
+          <Button
+            type="primary"
             onClick={handleSubmit}
             loading={loading}
           >

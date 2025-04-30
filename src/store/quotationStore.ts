@@ -62,6 +62,19 @@ const quotationStoreCreator: StateCreator<
       }
     },
 
+    // quoteInquiry: async (id: string, quoteData: QuoteFormData) => {
+    //   try {
+    //     set({ loading: true });
+    //     await api.patch(`/quotations/${id}/quote`, quoteData);
+    //     notification.success({ message: 'Quote submitted successfully' });
+    //   } catch (error) {
+    //     notification.error({ message: 'Quote submission failed' });
+    //     throw error;
+    //   } finally {
+    //     set({ loading: false });
+    //   }
+    // },
+
     // 价格计算逻辑
     calculatePrice: async ({ quantity, shippingMethod }) => {
       const res = await api.calculatePrice({ quantity, shippingMethod });
