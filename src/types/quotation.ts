@@ -31,7 +31,7 @@ export interface Quotation extends BaseEntity {
   productName: string;
   quantityType: 'single' | 'multiple'; // 询价类型
   quantityTiers: QuantityTier[];      // 多数量阶梯报价
-  status: 'draft' | 'quoted' | 'ordered' | 'expired';
+  status: 'draft' | 'quoted' | 'ordered' | 'canceled'; // 报价状态
   notes?: string;
   additionalFees?: AdditionalFee[];    // 附加费用
 }
@@ -50,7 +50,7 @@ export interface CreateQuotation {
 export interface UpdateQuotation {
   productName?: string;
   quantityTiers?: QuantityTier[];     // 更新时包含价格
-  status?: 'draft' | 'quoted' | 'ordered';
+  status?: 'draft' | 'quoted' | 'ordered' | 'canceled';
   additionalFees?: AdditionalFee[];
   notes?: string;
 }
@@ -64,7 +64,7 @@ export interface QuotationResponse extends Quotation {
 // 分页查询参数
 export interface QuotationPaginationParams extends PaginationParams {
   sortBy?: keyof Quotation;
-  status?: 'draft' | 'quoted' | 'ordered';
+  status?: 'draft' | 'quoted' | 'ordered' | 'canceled'; // 过滤状态
   productName?: string;
   customerId?: string;
   dateRange?: [string, string];       // 询价日期范围

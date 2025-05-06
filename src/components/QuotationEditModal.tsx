@@ -87,7 +87,7 @@ export default function QuotationEditModal({
     productName: string;
     customerId: string;
     inquiryDate: string;
-    status: 'draft' | 'quoted' | 'ordered';
+    status: 'draft' | 'quoted' | 'ordered' | 'canceled';
     notes?: string;
   }) => {
     try {

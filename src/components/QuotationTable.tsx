@@ -6,7 +6,7 @@ interface QuotationTableProps {
     id: string;
     productName: string;
     customerName: string;
-    status: 'draft' | 'quoted' | 'ordered';
+    status: 'draft' | 'quoted' | 'ordered' | 'canceled';
     inquiryDate: string;
     quantityTiers: Array<{ quantity: number }>; // 添加quantityTiers类型
   }>;
@@ -36,6 +36,7 @@ export function QuotationTable({
     draft: 'bg-yellow-100 text-yellow-800',
     quoted: 'bg-blue-100 text-blue-800',
     ordered: 'bg-green-100 text-green-800',
+    canceled: 'bg-red-100 text-red-800',
   };
 
   // 新增quantity显示格式化方法
