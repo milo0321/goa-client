@@ -9,6 +9,7 @@ interface FormField {
   type: 'text' | 'email' | 'tel' | 'number' | 'textarea' | 'select' | 'date';
   options?: { value: string; label: string }[];
   required?: boolean;
+  placeholder?: string;
   min?: number;
   step?: string;
 }
@@ -82,6 +83,7 @@ export function GenericForm<T>({
               className="mt-1 block w-full border border-gray-300 rounded-md p-2"
               rows={3}
               required={field.required}
+              placeholder={field.placeholder}
             />
           ) : field.type === 'select' ? (
             <select
@@ -117,6 +119,7 @@ export function GenericForm<T>({
               required={field.required}
               min={field.min}
               step={field.step}
+              placeholder={field.placeholder}
             />
           )}
         </div>
