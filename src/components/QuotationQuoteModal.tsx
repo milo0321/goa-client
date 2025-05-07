@@ -36,6 +36,7 @@ export default function QuotationQuoteModal({
   const [quantityTiers, setQuantityTiers] = useState<QuantityTier[]>([]);
   const [additionalFees, setAdditionalFees] = useState<AdditionalFee[]>([]);
   const [loadingPrices, setLoadingPrices] = useState<Record<string, boolean>>({});
+  const [customerName, setCustomerName] = useState<string>('');
 
   useEffect(() => {
     if (!customers.length && !customerLoading) {
@@ -44,6 +45,12 @@ export default function QuotationQuoteModal({
 
     const quotation = quotations.find(q => q.id === quotationId);
     if (quotation) {
+      if (quotation.customerId && customers.length > 0) {
+        const customer = customers.find(c => c.id === quotation.customerId);
+        if (customer) {
+          setCustomerName(customer.name);
+        }
+      }
       setCurrentQuotation(quotation);
       setQuantityTiers(quotation.quantityTiers || []);
       setAdditionalFees(quotation.additionalFees || []);
@@ -117,10 +124,22 @@ export default function QuotationQuoteModal({
     return <GenericModal isOpen title="Quote Quotation" onClose={onClose} isLoading />;
   }
 
+  const displayFields = [
+    { label: 'Customer', value: customerName },
+    { label: 'Inquiry Date', value: new Date(currentQuotation.inquiryDate).toLocaleDateString() },
+    { label: 'Article', value: currentQuotation.article },
+    { label: 'Client', value: currentQuotation.client },
+    { label: 'Size', value: currentQuotation.size },
+    { label: 'Material', value: currentQuotation.material },
+    { label: 'Color', value: currentQuotation.color },
+    { label: 'Branding', value: currentQuotation.branding },
+    { label: 'Packing', value: currentQuotation.packing },
+    { label: 'Quantity', value: currentQuotation.quantity },
+    { label: 'Certifications', value: currentQuotation.certifications },
+    { label: 'Details', value: currentQuotation.details },
+  ];
+
   const baseFields = [
-    { name: 'productName', label: 'Product Name', type: 'text' as const, required: true },
-    { name: 'customerId', label: 'Customer', type: 'select' as const, options: customers.map(c => ({ value: c.id, label: c.name })), required: true },
-    { name: 'inquiryDate', label: 'Inquiry Date', type: 'date' as const, required: true },
     { name: 'sampleProductionTime', label: 'Sample Production Time', type: 'text' as const, placeholder: 'e.g. 3-5 days' },
     { name: 'massProductionTime', label: 'Mass Production Time', type: 'text' as const, placeholder: 'e.g. 10-15 days' },
     { name: 'packingMethod', label: 'Packing Method', type: 'textarea' as const, placeholder: 'Detailed packing instructions...' },
@@ -139,6 +158,16 @@ export default function QuotationQuoteModal({
   return (
     <GenericModal isOpen title="Quote Quotation" onClose={onClose}>
       <div className="max-h-[80vh] overflow-y-auto space-y-6">
+      <div className="text-sm text-gray-800 space-y-3">
+        {displayFields
+          .filter((field) => field.value !== undefined && field.value !== null && field.value !== '')
+          .map((field) => (
+            <div key={field.label} className="flex">
+              <div className="w-40 font-semibold">{field.label}:</div>
+              <div className="flex-1 whitespace-pre-line">{field.value}</div>
+            </div>
+          ))}
+      </div>
         <GenericForm
           initialData={currentQuotation}
           fields={baseFields}

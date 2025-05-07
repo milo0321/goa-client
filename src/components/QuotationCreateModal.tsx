@@ -1,9 +1,10 @@
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useCustomerStore } from '../store/customerStore';
 import { useQuotationStore } from '../store/quotationStore';
 import { GenericModal } from './GenericModal';
 import { GenericForm } from './GenericForm';
-import { notification } from 'antd';
+import { notification, Button, Input } from 'antd';
+import dayjs from 'dayjs'; 
 
 interface QuotationCreateModalProps {
   isOpen: boolean;
@@ -18,6 +19,11 @@ export default function QuotationCreateModal({
 }: QuotationCreateModalProps) {
   const { items: customers, loading: customerLoading, fetchItems: fetchCustomers } = useCustomerStore();
   const { createItem } = useQuotationStore();
+  const formRef = useRef(null);
+  const [rawText, setRawText] = useState('');
+  const initialFormData = {
+    inquiryDate: dayjs(), // 设置当前时间
+  };
 
   // 提交处理
   const handleSubmit = async (baseData: {
@@ -57,6 +63,49 @@ export default function QuotationCreateModal({
     }
   }, [customers, customerLoading, fetchCustomers]);
 
+  // 点击解析
+  const handleParseText = () => {
+    if (!rawText.trim()) {
+      notification.warning({ message: 'No input to parse.' });
+      return;
+    }
+
+    const parsed = parseClipboardText(rawText);
+    formRef.current?.setFieldsValue(parsed);
+    notification.success({
+      message: 'Parsed Successfully',
+      description: 'Fields have been populated from the input.',
+    });
+  };
+
+  // 正则解析文本
+  const parseClipboardText = (text: string) => {
+    const result: Record<string, string> = {};
+
+    const patterns: Record<string, RegExp[]> = {
+      article: [/Article:\s*(.+)/i],
+      color: [/Color:\s*(.+)/i, /Colour:\s*(.+)/i],
+      branding: [/Print:\s*(.+)/i, /Branding:\s*(.+)/i],
+      size: [/Size:\s*(.+)/i],
+      material: [/Material:\s*(.+)/i],
+      packing: [/Packing:\s*(.+)/i],
+      quantity: [/Quantity:\s*(.+)/i],
+    };
+
+
+    for (const [key, regexList] of Object.entries(patterns)) {
+      for (const regex of regexList) {
+        const match = text.match(regex);
+        if (match) {
+          result[key] = match[1].trim();
+          break; // 成功匹配一个就跳过剩下的
+        }
+      }
+    }
+
+    return result;
+  };
+
   // 基础表单字段
   const baseFields = [
     { name: 'customerId', label: 'Customer', type: 'select' as const, options: customers.map(c => ({ value: c.id, label: c.name })), required: true },
@@ -74,19 +123,32 @@ export default function QuotationCreateModal({
   ];
 
   return (
-    <GenericModal
-      isOpen={isOpen}  // 使用传入的 isOpen 而不是直接传递 true
-      title="Add Quotation"
-      onClose={onClose}
-    >
+    <GenericModal isOpen={isOpen} title="Add Quotation" onClose={onClose}>
       <div className="max-h-[80vh] overflow-y-auto space-y-6">
-        {/* 基础信息表单 */}
+        {/* 输入原始文本并解析 */}
+        <div className="flex flex-col space-y-2">
+          <label className="font-semibold">Paste Raw Text Here:</label>
+          <Input.TextArea
+            rows={6}
+            value={rawText}
+            onChange={(e) => setRawText(e.target.value)}
+            placeholder={`Paste quotation content, e.g.:\nArticle: ABC123\nColor: Red\nSize: 30x40cm`}
+          />
+          <div className="flex justify-end">
+            <Button type="primary" onClick={handleParseText}>
+              Parse to Fields
+            </Button>
+          </div>
+        </div>
+
+        {/* 表单区域 */}
         <GenericForm
+          formRef={formRef}
+          initialData={initialFormData}
           fields={baseFields}
           onSubmit={handleSubmit}
-          submitText="Update Quotation"
-        >
-        </GenericForm>
+          submitText="Create Quotation"
+        />
       </div>
     </GenericModal>
   );

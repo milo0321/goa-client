@@ -64,7 +64,9 @@ export default function QuotationDetailView({ quotationId, onClose }: QuotationD
     pdf.text('Quotation Details', 14, 20);
 
     // 表格内容
-    const tableBody = displayFields.map((field) => [field.label, field.value || '-']);
+    const tableBody = displayFields
+      .filter((field) => field.value !== undefined && field.value !== null && field.value !== '')
+      .map((field) => [field.label, field.value || '-']);
 
     autoTable(pdf, {
       startY: 30,
@@ -118,12 +120,14 @@ export default function QuotationDetailView({ quotationId, onClose }: QuotationD
     >
       {/* Detail content section */}
       <div className="text-sm text-gray-800 space-y-3">
-        {displayFields.map((field) => (
-          <div key={field.label} className="flex">
-            <div className="w-40 font-semibold">{field.label}:</div>
-            <div className="flex-1 whitespace-pre-line">{field.value || '-'}</div>
-          </div>
-        ))}
+        {displayFields
+          .filter((field) => field.value !== undefined && field.value !== null && field.value !== '')
+          .map((field) => (
+            <div key={field.label} className="flex">
+              <div className="w-40 font-semibold">{field.label}:</div>
+              <div className="flex-1 whitespace-pre-line">{field.value}</div>
+            </div>
+          ))}
       </div>
       <div className="flex justify-end mt-4">
         <Button

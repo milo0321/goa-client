@@ -1,144 +1,107 @@
-import { useState } from 'react';
-import ErrorMessage from './ErrorMessage';
-import { Button, DatePicker } from 'antd';
-import dayjs from 'dayjs';
+import React, { useEffect } from 'react';
+import { Form, Input, Select, DatePicker, Button, InputNumber, Checkbox, Space } from 'antd';
+import { FormInstance } from 'antd/es/form';
+import { Field } from '../types/ui';
+import { setFieldsValueWithTypeConversion } from '../utils/date';
 
-interface FormField {
-  name: string;
-  label: string;
-  type: 'text' | 'email' | 'tel' | 'number' | 'textarea' | 'select' | 'date';
-  options?: { value: string; label: string }[];
-  required?: boolean;
-  placeholder?: string;
-  min?: number;
-  step?: string;
-}
-
-interface GenericFormProps<T> {
-  initialData?: T;
-  fields: FormField[];
-  onSubmit: (data: T) => Promise<void>;
+interface GenericFormProps {
+  fields: Field[];
+  onSubmit: (values: any) => void;
   submitText?: string;
-  loading?: boolean;
+  formRef?: React.RefObject<FormInstance>;
+  initialData?: any;  // Initial values for the form
   children?: React.ReactNode;
 }
 
-export function GenericForm<T>({
-  initialData,
+export const GenericForm: React.FC<GenericFormProps> = ({
   fields,
   onSubmit,
   submitText = 'Submit',
-  loading = false,
-  children,
-}: GenericFormProps<T>) {
-  const [formData, setFormData] = useState<T>(initialData || {} as T);
-  const [error, setError] = useState<string | null>(null);
+  formRef,
+  initialData,
+  children
+}) => {
+  const [form] = Form.useForm(); // 创建本地form实例
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
-    name: string
-  ) => {
-    const value = e.target.type === 'number' ? parseFloat(e.target.value) || 0 : e.target.value;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleDateChange = (date: any, name: string) => {
-    setFormData((prev) => ({ ...prev, [name]: date }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-
-    // 在提交前统一格式化日期字段
-    const formattedData = { ...formData };
-
-    // 查找所有日期字段并格式化
-    fields.forEach(field => {
-      if (field.required && !formattedData[field.name]) {
-        if (field.type === 'date') {
-          formattedData[field.name] = dayjs(); // 默认当前时间
-        } else {
-          formattedData[field.name] = ''; // 空字符串作为默认
-        }
-      }
-    });
-
-    try {
-      await onSubmit(formattedData);
-    } catch (err) {
-      console.error('Form submission error:', err);
-      setError('Failed to save data. Please try again.');
+  // 绑定外部ref,支持黏贴的时候的数据传入
+  useEffect(() => {
+    if (formRef && formRef.current !== form) {
+      (formRef as any).current = form;
     }
-  };
+  }, [formRef, form]);
+
+  // 支持初始化的时候数据传入
+  useEffect(() => {
+    if (initialData) {
+      const instance = formRef?.current || form;
+      setFieldsValueWithTypeConversion(instance, fields, initialData);
+    }
+  }, [initialData]);
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      {error && <ErrorMessage message={error} onClose={() => setError(null)} />}
-      {fields.map((field) => (
-        <div key={field.name}>
-          <label htmlFor={field.name} className="block text-sm font-medium text-gray-700">
-            {field.label}
-          </label>
-          {field.type === 'textarea' ? (
-            <textarea
-              id={field.name}
-              value={(formData as any)[field.name] || ''}
-              onChange={(e) => handleChange(e, field.name)}
-              className="mt-1 block w-full border border-gray-300 rounded-md p-2"
-              rows={3}
-              required={field.required}
-              placeholder={field.placeholder}
-            />
-          ) : field.type === 'select' ? (
-            <select
-              id={field.name}
-              value={(formData as any)[field.name] || ''}
-              onChange={(e) => handleChange(e, field.name)}
-              className="mt-1 block w-full border border-gray-300 rounded-md p-2"
-              required={field.required}
-            >
-              <option value="">Select {field.label}</option>
-              {field.options?.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          ) : field.type === 'date' ? (
-            <DatePicker
-              id={field.name}
-              value={dayjs((formData as any)[field.name])}  // Handle date value conversion
-              onChange={(date) => handleDateChange(date, field.name)}
-              className="mt-1 block w-full border border-gray-300 rounded-md p-2"
-              format="YYYY-MM-DD"
-              required={field.required}
-            />
-          ) : (
-            <input
-              type={field.type}
-              id={field.name}
-              value={(formData as any)[field.name] || (field.type === 'number' ? 0 : '')}
-              onChange={(e) => handleChange(e, field.name)}
-              className="mt-1 block w-full border border-gray-300 rounded-md p-2"
-              required={field.required}
-              min={field.min}
-              step={field.step}
-              placeholder={field.placeholder}
-            />
-          )}
-        </div>
-      ))}
-      {children}
-      <div className="flex justify-end mt-4">
-        <Button
-          type="primary"
-          htmlType="submit"
-          loading={loading}
-        >
+    <Form
+      form={formRef?.current || form}
+      onFinish={onSubmit}
+      layout="vertical"
+    >
+      {fields.map((field) => {
+        let fieldElement;
+
+        switch (field.type) {
+          case 'text':
+            fieldElement = <Input placeholder={field.placeholder} />;
+            break;
+          case 'textarea':
+            fieldElement = <Input.TextArea placeholder={field.placeholder} />;
+            break;
+          case 'select':
+            fieldElement = (
+              <Select placeholder={field.placeholder}>
+                {field.options?.map((option) => (
+                  <Select.Option key={option.value} value={option.value}>
+                    {option.label}
+                  </Select.Option>
+                ))}
+              </Select>
+            );
+            break;
+          case 'date':
+            fieldElement = <DatePicker style={{ width: '100%' }} />;
+            break;
+          case 'number':
+            fieldElement = <InputNumber style={{ width: '100%' }} />;
+            break;
+          case 'checkbox':
+            fieldElement = <Checkbox>{field.label}</Checkbox>;
+            break;
+          default:
+            fieldElement = <Input />;
+        }
+
+        return (
+          <Form.Item
+            key={field.name}
+            name={field.name}
+            label={field.type !== 'checkbox' ? field.label : undefined}
+            valuePropName={field.type === 'checkbox' ? 'checked' : 'value'}
+            rules={[{ required: field.required, message: `${field.label} is required!` }]}
+          >
+            {fieldElement}
+          </Form.Item>
+        );
+      })}
+
+      {children && (
+        <Space direction="vertical" size="middle" style={{ width: '100%', marginBottom: 24 }}>
+          {children}
+        </Space>
+      )}
+
+      <Form.Item>
+        <Button type="primary" htmlType="submit">
           {submitText}
         </Button>
-      </div>
-    </form>
+      </Form.Item>
+    </Form>
   );
-}
+};

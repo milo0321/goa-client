@@ -42,6 +42,9 @@ export const QuantityTiers = ({
             return (
               <div key={method} className="col-span-3">
                 <Input
+                  type="number"
+                  step="0.0001"
+                  min="0"
                   addonBefore={method === 'air' ? <IconPlane size={16} /> : <IconShip size={16} />}
                   value={price}
                   onChange={e => {
