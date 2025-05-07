@@ -7,11 +7,13 @@ import Pagination from '../components/Pagination';
 import QuotationCreateModal from '../components/QuotationCreateModal';
 import QuotationEditModal from '../components/QuotationEditModal';
 import QuotationQuoteModal from '../components/QuotationQuoteModal'
+import QuotationDetailView from '../components/QuotationDetailView';
 
 export default function QuotationList() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingQuotationId, setEditingQuotationId] = useState<string | null>(null);
   const [quoteQuotationId, setQuoteQuotationId] = useState<string | null>(null);
+  const [viewQuotationId, setViewQuotationId] = useState<string | null>(null);
   const { initialized, loading, items: quotations, pagination, fetchItems, deleteItem } = useQuotationStore();
 
   // 首次加载处理
@@ -74,6 +76,8 @@ export default function QuotationList() {
             onQuote={setQuoteQuotationId}
             onEdit={setEditingQuotationId}
             onDelete={handleDelete}
+            onView={setViewQuotationId}
+            onExport={handleDelete}
           />
 
           {/* 分页控制 - 复用相同组件 */}
@@ -114,6 +118,18 @@ export default function QuotationList() {
           onClose={() => setQuoteQuotationId(null)}
           onSubmitSuccess={() => {
             setQuoteQuotationId(null);
+            handleRefresh();
+          }}
+        />
+      )}
+
+      {/* 询价模态框 */}
+      {viewQuotationId && (
+        <QuotationDetailView
+          quotationId={viewQuotationId}
+          onClose={() => setViewQuotationId(null)}
+          onSubmitSuccess={() => {
+            setViewQuotationId(null);
             handleRefresh();
           }}
         />

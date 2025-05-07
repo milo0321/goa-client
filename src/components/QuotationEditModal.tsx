@@ -119,12 +119,7 @@ export default function QuotationEditModal({
   const baseFields = [
     { name: 'productName', label: 'Product Name', type: 'text' as const, required: true },
     { name: 'customerId', label: 'Customer', type: 'select' as const, options: customers.map(c => ({ value: c.id, label: c.name })), required: true },
-    {
-      name: 'inquiryDate',
-      label: 'Inquiry Date',
-      type: 'date' as const,  // 渲染日期选择器
-      required: true
-    },
+    { name: 'inquiryDate', label: 'Inquiry Date', type: 'date' as const, required: true },
     { name: 'notes', label: 'Notes', type: 'textarea' as const }
   ];
 

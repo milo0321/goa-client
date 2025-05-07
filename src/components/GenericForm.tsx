@@ -55,14 +55,19 @@ export function GenericForm<T>({
 
     // 查找所有日期字段并格式化
     fields.forEach(field => {
-      if (field.type === 'date' && formattedData[field.name]) {
-        formattedData[field.name] = dayjs(formattedData[field.name]).toISOString();
+      if (field.required && !formattedData[field.name]) {
+        if (field.type === 'date') {
+          formattedData[field.name] = dayjs(); // 默认当前时间
+        } else {
+          formattedData[field.name] = ''; // 空字符串作为默认
+        }
       }
     });
 
     try {
       await onSubmit(formattedData);
     } catch (err) {
+      console.error('Form submission error:', err);
       setError('Failed to save data. Please try again.');
     }
   };
