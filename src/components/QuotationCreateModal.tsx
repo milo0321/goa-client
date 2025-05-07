@@ -5,8 +5,6 @@ import { useQuotationStore } from '../store/quotationStore';
 import { GenericModal } from './GenericModal';
 import { GenericForm } from './GenericForm';
 import { notification } from 'antd';
-import { ShippingPrice } from '../types/quotation';
-import { QuantityTiers } from './QuantityTier';
 
 interface QuotationCreateModalProps {
   isOpen: boolean;
@@ -20,68 +18,33 @@ export default function QuotationCreateModal({
   onSubmitSuccess,
 }: QuotationCreateModalProps) {
   const { items: customers, loading: customerLoading, fetchItems: fetchCustomers } = useCustomerStore();
-  const { createItem, calculatePrice } = useQuotationStore();
-  const [loadingPrices, setLoadingPrices] = useState<Record<string, boolean>>({});
+  const { createItem } = useQuotationStore();
 
   // 表单状态管理
   const [formData] = useState({
     customerId: '',
     productName: '',
     quantityType: 'single' as 'single' | 'multiple',
+    client: '',
+    article: '',
+    size: '',
+    material: '',
+    color: '',
+    details: '',
+    branding: '',
+    packing: '',
+    quantity: '',
+    certifications: '',
     notes: '',
     inquiryDate: dayjs(), //默认当前日期
     status: 'quoted' as 'quoted' | 'draft' // 添加状态字段
   });
 
-  const [quantityTiers, setQuantityTiers] = useState<{
-    quantity: number;
-    prices: ShippingPrice[];
-  }[]>([
-    { quantity: 0, prices: [{ method: 'air', unitPrice: 0, currency: 'USD' }] },  // 初始值
-  ]);
-
-  const handlePriceCalculation = async (tierIndex: number, method: 'air' | 'ship') => {
-    const tier = quantityTiers[tierIndex];
-    if (!tier?.quantity) return;
-
-    setLoadingPrices(prev => ({ ...prev, [`${tierIndex}-${method}`]: true }));
-
-    try {
-      const price = await calculatePrice({
-        quantity: tier.quantity,
-        shippingMethod: method
-      });
-
-      const updatedTiers = [...quantityTiers];
-      const priceIndex = updatedTiers[tierIndex].prices.findIndex(p => p.method === method);
-
-      if (priceIndex >= 0) {
-        updatedTiers[tierIndex].prices[priceIndex].unitPrice = price;
-      } else {
-        updatedTiers[tierIndex].prices.push({
-          method,
-          unitPrice: price,
-          currency: 'USD'
-        });
-      }
-
-      setQuantityTiers(updatedTiers);
-    } catch (err) {
-      notification.error({
-        message: 'Price calculation failed',
-        description: err instanceof Error ? err.message : String(err)
-      });
-    } finally {
-      setLoadingPrices(prev => ({ ...prev, [`${tierIndex}-${method}`]: false }));
-    }
-  };
-
   // 提交处理
   const handleSubmit = async () => {
     try {
       await createItem({
-        ...formData,
-        quantityTiers
+        ...formData
       });
       onSubmitSuccess?.(); // 如果成功，调用成功回调
       onClose(); // 然后关闭模态框
@@ -111,7 +74,17 @@ export default function QuotationCreateModal({
       type: 'date' as const,  // 渲染日期选择器
       required: true
     },
-    { name: 'notes', label: 'Notes', type: 'textarea' as const }
+    { name: 'client', label: 'Client', type: 'text' as const, required: true },
+    { name: 'article', label: 'Article', type: 'text' as const, required: true },
+    { name: 'size', label: 'Size', type: 'text' as const, required: true },
+    { name: 'material', label: 'Material', type: 'text' as const, required: true },
+    { name: 'color', label: 'Color', type: 'text' as const, required: true },
+    { name: 'details', label: 'Details', type: 'text' as const, required: true },
+    { name: 'branding', label: 'Branding', type: 'text' as const, required: true },
+    { name: 'packing', label: 'Packing', type: 'text' as const, required: true },
+    { name: 'quantity', label: 'Quantity', type: 'text' as const, required: true },
+    { name: 'certifications', label: 'Certifications', type: 'text' as const, required: true },
+    { name: 'notes', label: 'Notes', type: 'textarea' as const },
   ];
 
   return (
@@ -127,13 +100,6 @@ export default function QuotationCreateModal({
           onSubmit={handleSubmit}
           submitText="Update Quotation"
         >
-          {/* 渲染数量阶梯和附加费用部分 */}
-          <QuantityTiers
-            quantityTiers={quantityTiers}
-            setQuantityTiers={setQuantityTiers}
-            loadingPrices={loadingPrices}
-            handlePriceCalculation={handlePriceCalculation}
-          />
         </GenericForm>
       </div>
     </GenericModal>

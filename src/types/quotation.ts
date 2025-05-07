@@ -28,18 +28,42 @@ export interface Quotation extends BaseEntity {
   inquiryDate: string;                // ISO 8601格式
   customerId: string;
   customer?: Customer;                // 关联查询时可用
+  client: string;
+  article: string;
+  size: string;
+  material: string;
+  color: string;
+  details: string;
+  branding: string;
+  packing: string;
+  quantity: string;
+  certifications: string;
+  price: string;
+  extraCost: string;
+  sampleTime: string;
+  massTime: string;
   productName: string;
   quantityType: 'single' | 'multiple'; // 询价类型
   quantityTiers: QuantityTier[];      // 多数量阶梯报价
+  additionalFees?: AdditionalFee[];   // 附加费用
   status: 'draft' | 'quoted' | 'ordered' | 'canceled'; // 报价状态
   notes?: string;
-  additionalFees?: AdditionalFee[];    // 附加费用
 }
 
 // 创建DTO
 export interface CreateQuotation {
   customerId: string;
   productName: string;
+  client: string;
+  article: string;
+  size: string;
+  material: string;
+  color: string;
+  details: string;
+  branding: string;
+  packing: string;
+  quantity: string;
+  certifications: string;
   quantityType: 'single' | 'multiple';
   quantityTiers: Omit<QuantityTier, 'prices'>[]; // 创建时无需价格
   additionalFees?: Omit<AdditionalFee, 'id'>[];
@@ -49,6 +73,16 @@ export interface CreateQuotation {
 // 更新/报价DTO
 export interface UpdateQuotation {
   productName?: string;
+  client: string;
+  article: string;
+  size: string;
+  material: string;
+  color: string;
+  details: string;
+  branding: string;
+  packing: string;
+  quantity: string;
+  certifications: string;
   quantityTiers?: QuantityTier[];     // 更新时包含价格
   status?: 'draft' | 'quoted' | 'ordered' | 'canceled';
   additionalFees?: AdditionalFee[];
