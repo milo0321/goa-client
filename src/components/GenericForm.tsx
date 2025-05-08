@@ -36,7 +36,7 @@ export const GenericForm: React.FC<GenericFormProps> = ({
       const instance = formRef?.current || form;
       setFieldsValueWithTypeConversion(instance, fields, initialData);
     }
-  }, [initialData]);
+  }, [initialData, formRef, form, fields]);
 
   return (
     <Form

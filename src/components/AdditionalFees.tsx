@@ -1,5 +1,6 @@
-import { Input, Select, Checkbox, Button } from 'antd';
-import { IconTrash, IconPlus } from '@tabler/icons-react';
+import { Input, Select, Checkbox, Button, Row, Col } from 'antd';
+import { IconTrash, IconPlus, IconReceipt2 } from '@tabler/icons-react';
+import React, { useState } from 'react';
 
 interface AdditionalFeesProps {
   additionalFees: { feeType: string; amount: number; refundable: boolean; conditions?: string }[];
@@ -10,28 +11,62 @@ export const AdditionalFees = ({
   additionalFees,
   setAdditionalFees,
 }: AdditionalFeesProps) => {
+  const [feeOptions, setFeeOptions] = useState([
+    { value: 'sampling', label: 'Sampling Fee' },
+    { value: 'mold', label: 'Mold Fee' },
+    { value: 'certification', label: 'Certification' },
+  ]);
+
+  const addFee = () => {
+    setAdditionalFees([
+      ...additionalFees,
+      { feeType: 'sampling', amount: 0, refundable: false },
+    ]);
+  };
+
   return (
     <div className="border rounded p-4">
-      <h4 className="font-medium mb-4">Additional Fees</h4>
+      <Row justify="space-between" align="middle" className="mb-4">
+        <Col>
+          <h4 className="font-medium mb-0 flex items-center">
+            <IconReceipt2 className="mr-2" />
+            Additional Fees
+          </h4>
+        </Col>
+        <Col>
+          <Button
+            type="dashed"
+            icon={<IconPlus size={16} />}
+            onClick={() =>
+              setAdditionalFees([...additionalFees, { feeType: 'sampling', amount: 0, refundable: false }])
+            }
+          >
+            Add Fee
+          </Button>
+        </Col>
+      </Row>
+
       {additionalFees.map((fee, index) => (
         <div key={index} className="grid grid-cols-12 gap-4 mb-4">
           <div className="col-span-3">
             <Select
+              mode="tags"
               value={fee.feeType}
               onChange={v => {
+                const newVal = Array.isArray(v) ? v[0] : v;
+                if (!feeOptions.find(opt => opt.value === newVal)) {
+                  setFeeOptions([...feeOptions, { value: newVal, label: newVal }]);
+                }
                 const newFees = [...additionalFees];
-                newFees[index].feeType = v;
+                newFees[index].feeType = newVal;
                 setAdditionalFees(newFees);
               }}
-              options={[
-                { value: 'sampling', label: 'Sampling Fee' },
-                { value: 'mold', label: 'Mold Fee' },
-                { value: 'certification', label: 'Certification' },
-              ]}
+              options={feeOptions}
+              style={{ minWidth: '150px' }}  // Ensure the select has a minimum width
             />
           </div>
 
-          <div className="col-span-3">
+          <div className="col-span-2">
             <Input
               value={fee.amount}
               onChange={e => {
@@ -59,7 +94,7 @@ export const AdditionalFees = ({
           </div>
 
           {fee.refundable && (
-            <div className="col-span-3">
+            <div className="col-span-6">
               <Input
                 value={fee.conditions || ''}
                 onChange={e => {
@@ -85,16 +120,6 @@ export const AdditionalFees = ({
           </div>
         </div>
       ))}
-
-      <Button
-        type="dashed"
-        icon={<IconPlus size={16} />}
-        onClick={() =>
-          setAdditionalFees([...additionalFees, { feeType: 'sampling', amount: 0, refundable: false }])
-        }
-      >
-        Add Fee
-      </Button>
     </div>
   );
 };

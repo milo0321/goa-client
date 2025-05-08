@@ -2,17 +2,18 @@ import { BaseEntity, PaginationParams, PaginatedResponse, ApiResponse } from './
 import { Customer } from './customer';
 
 // 运输方式定价
-export interface ShippingPrice {
-  method: 'air' | 'ship' | 'express'; // 运输方式
+export interface QuantityPrice {
+  quantity: number;                   // 数量（如5000/10000）
   unitPrice: number;                  // 单价
   currency?: string;                  // 货币类型（默认USD）
-  terms?: string;                     // 条款（如CNF Germany）
 }
 
 // 数量阶梯定价
-export interface QuantityTier {
-  quantity: number;                   // 数量（如5000/10000）
-  prices: ShippingPrice[];            // 不同运输方式的价格
+export interface QuotePrice {
+  method: 'air' | 'ship' | 'express'; // 运输方式
+  terms?: string;                     // 条款（如CNF FOB）
+  destination?: string;               // 目的地（如Germany)
+  prices: QuantityPrice[];         // 不同数量的价格
 }
 
 // 附加费用
@@ -22,6 +23,32 @@ export interface AdditionalFee {
   refundable: boolean;                // 是否可返还
   conditions?: string;                // 返还条件（如"order >10000pcs"）
 }
+
+export interface PackingField {
+  value?: string;
+  unit?: string;
+}
+
+export interface SizeField {
+  length?: string;
+  width?: string;
+  height?: string;
+  unit?: string;
+}
+
+export interface PackingDetail {
+  innerPack?: PackingField;
+  outerPack?: PackingField;
+  cartonSize?: SizeField;
+  weight?: PackingField;
+}
+
+export type ProductionTimeValue = {
+  type: 'exact' | 'range';
+  from: number;
+  to?: number; // only present if type is 'range'
+  unit: 'days' | 'months';
+};
 
 // 主报价单实体
 export interface Quotation extends BaseEntity {
@@ -40,12 +67,11 @@ export interface Quotation extends BaseEntity {
   certifications: string;
   price: string;
   extraCost: string;
-  sampleTime: string;
-  massTime: string;
-  productName: string;
-  quantityType: 'single' | 'multiple'; // 询价类型
-  quantityTiers: QuantityTier[];      // 多数量阶梯报价
-  additionalFees?: AdditionalFee[];   // 附加费用
+  sampleTime: ProductionTimeValue;
+  massTime: ProductionTimeValue;
+  quotePrices: QuotePrice[];        // 多数量阶梯报价
+  additionalFees?: AdditionalFee[];     // 附加费用
+  packingMethods?: PackingDetail[];     // 打包方式
   status: 'draft' | 'quoted' | 'ordered' | 'canceled'; // 报价状态
   notes?: string;
 }
@@ -65,7 +91,7 @@ export interface CreateQuotation {
   quantity: string;
   certifications: string;
   quantityType: 'single' | 'multiple';
-  quantityTiers: Omit<QuantityTier, 'prices'>[]; // 创建时无需价格
+  quotePrices: Omit<QuotePrice, 'prices'>[]; // 创建时无需价格
   additionalFees?: Omit<AdditionalFee, 'id'>[];
   notes?: string;
 }
@@ -83,9 +109,12 @@ export interface UpdateQuotation {
   packing: string;
   quantity: string;
   certifications: string;
-  quantityTiers?: QuantityTier[];     // 更新时包含价格
+  sampleTime: ProductionTimeValue;
+  massTime: ProductionTimeValue;
+  quotePrices: QuotePrice[];        // 多数量阶梯报价
+  additionalFees?: AdditionalFee[];     // 附加费用
+  packingMethods?: PackingDetail[];     // 打包方式
   status?: 'draft' | 'quoted' | 'ordered' | 'canceled';
-  additionalFees?: AdditionalFee[];
   notes?: string;
 }
 
@@ -112,5 +141,4 @@ export type {
 };
 
 // 实用类型
-export type ShippingMethod = ShippingPrice['method'];
 export type FeeType = AdditionalFee['feeType'];

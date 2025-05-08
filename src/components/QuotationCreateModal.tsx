@@ -4,7 +4,7 @@ import { useQuotationStore } from '../store/quotationStore';
 import { GenericModal } from './GenericModal';
 import { GenericForm } from './GenericForm';
 import { notification, Button, Input } from 'antd';
-import dayjs from 'dayjs'; 
+import dayjs from 'dayjs';
 
 interface QuotationCreateModalProps {
   isOpen: boolean;

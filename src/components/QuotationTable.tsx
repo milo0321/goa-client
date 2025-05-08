@@ -10,7 +10,6 @@ interface QuotationTableProps {
     quantity: string;
     status: 'draft' | 'quoted' | 'ordered' | 'canceled';
     inquiryDate: string;
-    quantityTiers: Array<{ quantity: number }>; // 添加quantityTiers类型
   }>;
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;

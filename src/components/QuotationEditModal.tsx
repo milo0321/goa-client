@@ -4,7 +4,7 @@ import { useQuotationStore } from '../store/quotationStore';
 import { GenericForm } from './GenericForm';
 import { GenericModal } from './GenericModal';
 import { notification } from 'antd';
-import { QuantityTier, AdditionalFee } from '../types/quotation';
+import { AdditionalFee } from '../types/quotation';
 
 interface QuotationEditModalProps {
   quotationId: string;
@@ -27,7 +27,6 @@ export default function QuotationEditModal({
   const { items: customers, fetchItems: fetchCustomers, loading: customerLoading } = useCustomerStore(); // 加载客户数据
 
   // 本地状态管理复杂表单数据
-  const [quantityTiers, setQuantityTiers] = useState<QuantityTier[]>([]);
   const [additionalFees, setAdditionalFees] = useState<AdditionalFee[]>([]);
 
   useEffect(() => {
@@ -38,7 +37,6 @@ export default function QuotationEditModal({
     const quotation = quotations.find(q => q.id === quotationId);
     if (quotation) {
       setCurrentQuotation(quotation);
-      setQuantityTiers(quotation.quantityTiers || []);
       setAdditionalFees(quotation.additionalFees || []);
     }
   }, [quotationId, quotations, customers, customerLoading, fetchCustomers, setCurrentQuotation]);
@@ -52,12 +50,10 @@ export default function QuotationEditModal({
   }) => {
     try {
       console.log('Submitting form data:', baseData);
-      console.log('Quantity Tiers:', quantityTiers);
       console.log('Additional Fees:', additionalFees);
 
       await updateItem(quotationId, {
         ...baseData,
-        quantityTiers,
         additionalFees
       });
       notification.success({ message: 'Quotation updated!' });

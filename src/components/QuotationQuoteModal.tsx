@@ -4,9 +4,11 @@ import { useQuotationStore } from '../store/quotationStore';
 import { GenericForm } from './GenericForm';
 import { GenericModal } from './GenericModal';
 import { notification } from 'antd';
-import { QuantityTier, AdditionalFee } from '../types/quotation';
-import { QuantityTiers } from './QuantityTier';
+import { QuotePrice, AdditionalFee, PackingDetail, ProductionTimeValue } from '../types/quotation';
+import { QuotePrices } from './QuotePrices';
 import { AdditionalFees } from './AdditionalFees';
+import { PackingMethodInput } from './PackingMethodInput';
+import { ProductionTimeInput } from './ProductionTimeInput';
 
 interface QuotationQuoteModalProps {
   quotationId: string;
@@ -24,7 +26,6 @@ export default function QuotationQuoteModal({
     items: quotations,
     setCurrentItem: setCurrentQuotation,
     updateItem,
-    calculatePrice
   } = useQuotationStore();
 
   const {
@@ -33,10 +34,22 @@ export default function QuotationQuoteModal({
     loading: customerLoading
   } = useCustomerStore();
 
-  const [quantityTiers, setQuantityTiers] = useState<QuantityTier[]>([]);
+  const [quotePrices, setQuotePrices] = useState<QuotePrice[]>([]);
   const [additionalFees, setAdditionalFees] = useState<AdditionalFee[]>([]);
-  const [loadingPrices, setLoadingPrices] = useState<Record<string, boolean>>({});
+  const [packingMethods, setPackingMethods] = useState<PackingDetail[]>([]);
   const [customerName, setCustomerName] = useState<string>('');
+  const [sampleTime, setSampleTime] = useState<ProductionTimeValue>({
+    type: 'range',
+    from: 10,
+    to: 15,
+    unit: 'days',
+  });
+
+  const [massTime, setMassTime] = useState<ProductionTimeValue>({
+    type: 'exact',
+    from: 30,
+    unit: 'days',
+  });
 
   useEffect(() => {
     if (!customers.length && !customerLoading) {
@@ -52,46 +65,11 @@ export default function QuotationQuoteModal({
         }
       }
       setCurrentQuotation(quotation);
-      setQuantityTiers(quotation.quantityTiers || []);
+      setQuotePrices(quotation.quotePrices || []);
       setAdditionalFees(quotation.additionalFees || []);
+      setPackingMethods(quotation.packingMethods || []);
     }
   }, [quotationId, quotations, customers, customerLoading, fetchCustomers, setCurrentQuotation]);
-
-  const handlePriceCalculation = async (tierIndex: number, method: 'air' | 'ship') => {
-    const tier = quantityTiers[tierIndex];
-    if (!tier?.quantity) return;
-
-    setLoadingPrices(prev => ({ ...prev, [`${tierIndex}-${method}`]: true }));
-
-    try {
-      const price = await calculatePrice({
-        quantity: tier.quantity,
-        shippingMethod: method
-      });
-
-      const updatedTiers = [...quantityTiers];
-      const priceIndex = updatedTiers[tierIndex].prices.findIndex(p => p.method === method);
-
-      if (priceIndex >= 0) {
-        updatedTiers[tierIndex].prices[priceIndex].unitPrice = price;
-      } else {
-        updatedTiers[tierIndex].prices.push({
-          method,
-          unitPrice: price,
-          currency: 'USD'
-        });
-      }
-
-      setQuantityTiers(updatedTiers);
-    } catch (err) {
-      notification.error({
-        message: 'Price calculation failed',
-        description: err instanceof Error ? err.message : String(err)
-      });
-    } finally {
-      setLoadingPrices(prev => ({ ...prev, [`${tierIndex}-${method}`]: false }));
-    }
-  };
 
   const handleSubmit = async (baseData: {
     productName: string;
@@ -99,15 +77,15 @@ export default function QuotationQuoteModal({
     inquiryDate: string;
     sampleProductionTime?: string;
     massProductionTime?: string;
-    packingMethod?: string;
     notes?: string;
   }) => {
     try {
       await updateItem(quotationId, {
         ...baseData,
         status: 'quoted', // 强制标记为 quoted
-        quantityTiers,
-        additionalFees
+        quantityTiers: quotePrices,
+        additionalFees,
+        packingMethods
       });
       notification.success({ message: 'Quotation submitted successfully!' });
       onSubmitSuccess?.();
@@ -140,9 +118,6 @@ export default function QuotationQuoteModal({
   ];
 
   const baseFields = [
-    { name: 'sampleProductionTime', label: 'Sample Production Time', type: 'text' as const, placeholder: 'e.g. 3-5 days' },
-    { name: 'massProductionTime', label: 'Mass Production Time', type: 'text' as const, placeholder: 'e.g. 10-15 days' },
-    { name: 'packingMethod', label: 'Packing Method', type: 'textarea' as const, placeholder: 'Detailed packing instructions...' },
     {
       name: 'notes', label: 'Notes', type: 'textarea' as const, attrs: {
         rows: 10, // 控制初始高度
@@ -157,32 +132,45 @@ export default function QuotationQuoteModal({
 
   return (
     <GenericModal isOpen title="Quote Quotation" onClose={onClose}>
-      <div className="max-h-[80vh] overflow-y-auto space-y-6">
-      <div className="text-sm text-gray-800 space-y-3">
-        {displayFields
-          .filter((field) => field.value !== undefined && field.value !== null && field.value !== '')
-          .map((field) => (
-            <div key={field.label} className="flex">
-              <div className="w-40 font-semibold">{field.label}:</div>
-              <div className="flex-1 whitespace-pre-line">{field.value}</div>
-            </div>
-          ))}
-      </div>
+      <div className="max-h-[160vh] overflow-y-auto space-y-6">
+        <div className="text-sm text-gray-800 space-y-3">
+          {displayFields
+            .filter((field) => field.value !== undefined && field.value !== null && field.value !== '')
+            .map((field) => (
+              <div key={field.label} className="flex">
+                <div className="w-40 font-semibold">{field.label}:</div>
+                <div className="flex-1 whitespace-pre-line">{field.value}</div>
+              </div>
+            ))}
+        </div>
         <GenericForm
           initialData={currentQuotation}
           fields={baseFields}
           onSubmit={handleSubmit}
           submitText="Submit Quotation"
         >
-          <QuantityTiers
-            quantityTiers={quantityTiers}
-            setQuantityTiers={setQuantityTiers}
-            loadingPrices={loadingPrices}
-            handlePriceCalculation={handlePriceCalculation}
+          <ProductionTimeInput
+            label="Sample Production Time"
+            value={sampleTime}
+            onChange={setSampleTime}
+          />
+
+          <ProductionTimeInput
+            label="Mass Production Time"
+            value={massTime}
+            onChange={setMassTime}
+          />
+          <QuotePrices
+            quotePrices={quotePrices}
+            setQuotePrices={setQuotePrices}
           />
           <AdditionalFees
             additionalFees={additionalFees}
             setAdditionalFees={setAdditionalFees}
+          />
+          <PackingMethodInput
+            packingMethods={packingMethods}
+            setPackingMethods={setPackingMethods}
           />
         </GenericForm>
       </div>
