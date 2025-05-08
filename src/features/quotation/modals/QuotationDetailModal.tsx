@@ -1,9 +1,9 @@
 // components/QuotationDetailView.tsx
 import { useEffect, useState, useRef } from 'react';
 import { Button } from 'antd';
-import { GenericModal } from './GenericModal';
-import { useQuotationStore } from '../store/quotationStore';
-import { useCustomerStore } from '../store/customerStore';
+import { GenericModal } from '../../../components/GenericModal';
+import { useQuotationStore } from '../store/quotation.store';
+import { useCustomerStore } from '../../customer/store/customer.store';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
@@ -12,7 +12,7 @@ interface QuotationDetailViewProps {
   onClose: () => void;
 }
 
-export default function QuotationDetailView({ quotationId, onClose }: QuotationDetailViewProps) {
+export default function QuotationDetailModal({ quotationId, onClose }: QuotationDetailViewProps) {
   const {
     currentItem: currentQuotation,
     items: quotations,

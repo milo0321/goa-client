@@ -1,5 +1,5 @@
-import { useCustomerStore } from '../store/customerStore';
-import { GenericTable } from './GenericTable';
+import { useCustomerStore } from '../store/customer.store';
+import { GenericTable } from '../../../components/GenericTable';
 
 interface CustomerTableProps {
   data: Array<{ id: string; name: string; email: string; phone: string }>;

@@ -1,5 +1,5 @@
-import { BaseEntity, PaginationParams, PaginatedResponse, ApiResponse } from './base';
-import { Customer } from './customer';
+import { BaseEntity, PaginationParams, PaginatedResponse, ApiResponse } from '../../../types/base';
+import { Customer } from '../../customer/types/customer.types';
 
 // 运输方式定价
 export interface QuantityPrice {

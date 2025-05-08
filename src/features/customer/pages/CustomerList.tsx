@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { IconRefresh, IconPlus } from '@tabler/icons-react';
 import { Loader2 } from 'lucide-react';
-import { useCustomerStore } from '../store/customerStore';
-import { CustomerTable } from '../components/CustomerTable';
-import Pagination from '../components/Pagination';
-import { CustomerCreateModal } from '../components/CustomerCreateModal';
-import CustomerEditModal from '../components/CustomerEditModal';
+import { useCustomerStore } from '../store/customer.store';
+import { CustomerTable } from './CustomerTable';
+import Pagination from '../../../components/Pagination';
+import { CustomerCreateModal } from '../modals/CustomerCreateModal';
+import CustomerEditModal from '../modals/CustomerEditModal';
 
 export default function CustomerList() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);

@@ -1,6 +1,6 @@
-import { useQuotationStore } from '../store/quotationStore';
-import { GenericTable } from './GenericTable';
-import { ActionButton } from './ActionButton';
+import { useQuotationStore } from '../store/quotation.store';
+import { GenericTable } from '../../../components/GenericTable';
+import { ActionButton } from '../../../components/ActionButton';
 
 interface QuotationTableProps {
   data: Array<{

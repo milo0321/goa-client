@@ -1,6 +1,6 @@
 import { Input, Button, Row, Col, Select } from 'antd';
 import { IconPlus, IconTrash, IconPlane, IconShip, IconPackage } from '@tabler/icons-react';
-import { QuotePrice } from '../types/quotation';
+import { QuotePrice } from '../types/quotation.types';
 
 const methodIcons = {
   air: <IconPlane size={16} />,

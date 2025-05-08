@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
-import { useCustomerStore } from '../store/customerStore';
-import { useQuotationStore } from '../store/quotationStore';
-import { GenericForm } from './GenericForm';
-import { GenericModal } from './GenericModal';
+import { useCustomerStore } from '../../customer/store/customer.store';
+import { useQuotationStore } from '../store/quotation.store';
+import { GenericForm } from '../../../components/GenericForm';
+import { GenericModal } from '../../../components/GenericModal';
 import { notification } from 'antd';
-import { AdditionalFee } from '../types/quotation';
+import { AdditionalFee } from '../types/quotation.types';
 
 interface QuotationEditModalProps {
   quotationId: string;

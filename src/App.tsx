@@ -1,6 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import CustomerList from './pages/CustomerList';
-import QuotationList from './pages/QuotationList';
+import CustomerList from './features/customer/pages/CustomerList';
+import QuotationList from './features/quotation/pages/QuotationList';
 import Layout from './components/Layout';
 
 function App() {

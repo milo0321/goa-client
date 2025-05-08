@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
 import { IconRefresh, IconPlus } from '@tabler/icons-react';
 import { Loader2 } from 'lucide-react';
-import { useQuotationStore } from '../store/quotationStore';
-import { QuotationTable } from '../components/QuotationTable';
-import Pagination from '../components/Pagination';
-import QuotationCreateModal from '../components/QuotationCreateModal';
-import QuotationEditModal from '../components/QuotationEditModal';
-import QuotationQuoteModal from '../components/QuotationQuoteModal'
-import QuotationDetailView from '../components/QuotationDetailView';
+import { useQuotationStore } from '../store/quotation.store';
+import { QuotationTable } from './QuotationTable';
+import Pagination from '../../../components/Pagination';
+import QuotationCreateModal from '../modals/QuotationCreateModal';
+import QuotationEditModal from '../modals/QuotationEditModal';
+import QuotationQuoteModal from '../modals/QuotationQuoteModal'
+import QuotationDetailModal from '../modals/QuotationDetailModal';
 
 export default function QuotationList() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -125,7 +125,7 @@ export default function QuotationList() {
 
       {/* 询价模态框 */}
       {viewQuotationId && (
-        <QuotationDetailView
+        <QuotationDetailModal
           quotationId={viewQuotationId}
           onClose={() => setViewQuotationId(null)}
           onSubmitSuccess={() => {

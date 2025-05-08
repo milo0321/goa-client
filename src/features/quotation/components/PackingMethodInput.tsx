@@ -1,8 +1,8 @@
 import React from 'react';
 import { Input, Button, Row, Col, Space } from 'antd';
 import { IconTrash, IconPlus, IconPackages } from '@tabler/icons-react';
-import { PackingDetail } from '../types/quotation';
-import { formatPackingMethodDescription } from '../utils/format';
+import { PackingDetail } from '../types/quotation.types';
+import { formatPackingMethodDescription } from '../../../utils/format';
 
 interface PackingMethodInputProps {
   packingMethods: PackingDetail[];

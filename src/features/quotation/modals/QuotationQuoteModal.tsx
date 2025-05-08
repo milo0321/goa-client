@@ -1,14 +1,14 @@
 import { useEffect, useState } from 'react';
-import { useCustomerStore } from '../store/customerStore';
-import { useQuotationStore } from '../store/quotationStore';
-import { GenericForm } from './GenericForm';
-import { GenericModal } from './GenericModal';
 import { notification } from 'antd';
-import { QuotePrice, AdditionalFee, PackingDetail, ProductionTimeValue } from '../types/quotation';
-import { QuotePrices } from './QuotePrices';
-import { AdditionalFees } from './AdditionalFees';
-import { PackingMethodInput } from './PackingMethodInput';
-import { ProductionTimeInput } from './ProductionTimeInput';
+import { QuotePrice, AdditionalFee, PackingDetail, ProductionTimeValue } from '../types/quotation.types';
+import { useCustomerStore } from '../../customer/store/customer.store';
+import { useQuotationStore } from '../store/quotation.store';
+import { GenericForm } from '../../../components/GenericForm';
+import { GenericModal } from '../../../components/GenericModal';
+import { QuotePrices } from '../components/QuotePrices';
+import { AdditionalFees } from '../components/AdditionalFees';
+import { PackingMethodInput } from '../components/PackingMethodInput';
+import { ProductionTimeInput } from '../components/ProductionTimeInput';
 
 interface QuotationQuoteModalProps {
   quotationId: string;

@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
-import { useCustomerStore } from '../store/customerStore';
-import { CreateCustomer, UpdateCustomer, Customer } from '../types/customer';
+import { useCustomerStore } from '../store/customer.store';
+import { CreateCustomer, UpdateCustomer, Customer } from '../types/customer.types';
 
 interface CustomerFormProps {
   initialData?: Customer | null;
   onSubmitSuccess?: () => void;
 }
 
-export default function CustomerForm({ 
+export default function CustomerForm({
   initialData,
   onSubmitSuccess
 }: CustomerFormProps) {
@@ -99,8 +99,8 @@ export default function CustomerForm({
 
       {/* 添加其他字段... */}
 
-      <button 
-        type="submit" 
+      <button
+        type="submit"
         disabled={loading}
         className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-gray-400"
       >

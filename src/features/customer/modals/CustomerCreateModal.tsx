@@ -1,6 +1,6 @@
-import { useCustomerStore } from '../store/customerStore';
-import { GenericModal } from './GenericModal';
-import { GenericForm } from './GenericForm';
+import { useCustomerStore } from '../store/customer.store';
+import { GenericModal } from '../../../components/GenericModal';
+import { GenericForm } from '../../../components/GenericForm';
 
 interface CustomerCreateModalProps {
   isOpen: boolean;

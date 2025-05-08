@@ -1,4 +1,4 @@
-import { PackingDetail, ProductionTimeValue } from '../types/quotation';
+import { PackingDetail, ProductionTimeValue } from '../features/quotation/types/quotation.types';
 
 export const formatPackingMethodDescription = (method: PackingDetail): string => {
   const inner = method.innerPack?.value ? `${method.innerPack.value}${method.innerPack.unit || ''}` : '';

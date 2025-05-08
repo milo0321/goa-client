@@ -4,13 +4,13 @@ import {
   createEntity,
   updateEntity,
   deleteEntity
-} from './client';
+} from '../../../api/client.api';
 import {
   Customer,
   CreateCustomer,
   UpdateCustomer,
   CustomerPaginationParams
-} from '../types/customer';
+} from '../types/customer.types';
 
 const ENDPOINT = '/customers';
 

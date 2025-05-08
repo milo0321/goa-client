@@ -1,8 +1,8 @@
 import { create } from 'zustand';
-import * as api from '../api/customer';
-import { createResourceStore } from '../lib/createResourceStore';
-import { Customer, CreateCustomer, UpdateCustomer } from '../types/customer';
-import { ResourceStore } from '../types/base';
+import * as api from '../api/customer.api';
+import { createResourceStore } from '../../../lib/createResourceStore';
+import { Customer, CreateCustomer, UpdateCustomer } from '../types/customer.types';
+import { ResourceStore } from '../../../types/base';
 import { StateCreator } from 'zustand/vanilla';
 
 // 定义扩展的CustomerStore类型

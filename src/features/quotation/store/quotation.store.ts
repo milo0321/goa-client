@@ -1,19 +1,19 @@
 import { create } from 'zustand';
-import * as api from '../api/quotation';
-import { createResourceStore } from '../lib/createResourceStore';
-import { 
-  Quotation, 
-  CreateQuotation, 
+import * as api from '../api/quotation.api';
+import { createResourceStore } from '../../../lib/createResourceStore';
+import {
+  Quotation,
+  CreateQuotation,
   UpdateQuotation,
-  QuantityTier,
+  QuotePrice,
   AdditionalFee
-} from '../types/quotation';
-import { ResourceStore } from '../types/base';
+} from '../types/quotation.types';
+import { ResourceStore } from '../../../types/base';
 import { StateCreator } from 'zustand/vanilla';
 
 type QuotationStore = ResourceStore<Quotation> & {
   submitQuotation: (id: string, priceData: {
-    quantityTiers: QuantityTier[];
+    quotePrices: QuotePrice[];
     additionalFees?: AdditionalFee[];
   }) => Promise<void>;
   calculatePrice: (params: {
@@ -40,11 +40,11 @@ const quotationStoreCreator: StateCreator<
     ...baseStore,
 
     // 提交报价（带多阶梯价格）
-    submitQuotation: async (id, { quantityTiers, additionalFees }) => {
+    submitQuotation: async (id, { quotePrices, additionalFees }) => {
       set({ loading: true, error: null });
       try {
-        const updated = await api.submitQuotation(id, { 
-          quantityTiers,
+        const updated = await api.submitQuotation(id, {
+          quotePrices,
           additionalFees,
         });
         set({

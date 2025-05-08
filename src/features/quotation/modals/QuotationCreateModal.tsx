@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
-import { useCustomerStore } from '../store/customerStore';
-import { useQuotationStore } from '../store/quotationStore';
-import { GenericModal } from './GenericModal';
-import { GenericForm } from './GenericForm';
+import { useCustomerStore } from '../../customer/store/customer.store';
+import { useQuotationStore } from '../store/quotation.store';
+import { GenericModal } from '../../../components/GenericModal';
+import { GenericForm } from '../../../components/GenericForm';
 import { notification, Button, Input } from 'antd';
 import dayjs from 'dayjs';
 
