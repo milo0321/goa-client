@@ -13,7 +13,7 @@ export interface QuotePrice {
   method: 'air' | 'ship' | 'express'; // 运输方式
   terms?: string;                     // 条款（如CNF FOB）
   destination?: string;               // 目的地（如Germany)
-  prices: QuantityPrice[];         // 不同数量的价格
+  prices: QuantityPrice[];            // 不同数量的价格
 }
 
 // 附加费用
@@ -30,10 +30,10 @@ export interface PackingField {
 }
 
 export interface SizeField {
-  length?: string;
-  width?: string;
-  height?: string;
-  unit?: string;
+  length?: number;
+  width?: number;
+  height?: number;
+  unit?: number;
 }
 
 export interface PackingDetail {
@@ -43,10 +43,10 @@ export interface PackingDetail {
   weight?: PackingField;
 }
 
-export type ProductionTimeValue = {
-  type: 'exact' | 'range';
-  from: number;
-  to?: number; // only present if type is 'range'
+export type ProductionTime = {
+  timeType: 'exact' | 'range';
+  fromTime: number;
+  toTime?: number; // only present if type is 'range'
   unit: 'days' | 'months';
 };
 
@@ -55,8 +55,8 @@ export interface Quotation extends BaseEntity {
   inquiryDate: string;                // ISO 8601格式
   customerId: string;
   customer?: Customer;                // 关联查询时可用
-  client: string;
   article: string;
+  client: string;
   size: string;
   material: string;
   color: string;
@@ -67,21 +67,21 @@ export interface Quotation extends BaseEntity {
   certifications: string;
   price: string;
   extraCost: string;
-  sampleTime: ProductionTimeValue;
-  massTime: ProductionTimeValue;
+  sampleTime: ProductionTime;
+  massTime: ProductionTime;
   quotePrices: QuotePrice[];        // 多数量阶梯报价
   additionalFees?: AdditionalFee[];     // 附加费用
-  packingMethods?: PackingDetail[];     // 打包方式
+  packingDetails?: PackingDetail[];     // 打包方式
   status: 'draft' | 'quoted' | 'ordered' | 'canceled'; // 报价状态
   notes?: string;
 }
 
 // 创建DTO
 export interface CreateQuotation {
+  inquiryDate: string;                // ISO 8601格式
   customerId: string;
-  productName: string;
-  client: string;
   article: string;
+  client: string;
   size: string;
   material: string;
   color: string;
@@ -90,17 +90,18 @@ export interface CreateQuotation {
   packing: string;
   quantity: string;
   certifications: string;
-  quantityType: 'single' | 'multiple';
-  quotePrices: Omit<QuotePrice, 'prices'>[]; // 创建时无需价格
-  additionalFees?: Omit<AdditionalFee, 'id'>[];
+  price: string;
+  extraCost: string;
   notes?: string;
+  status: 'draft' | 'quoted' | 'ordered' | 'canceled'; // 报价状态
 }
 
 // 更新/报价DTO
 export interface UpdateQuotation {
-  productName?: string;
-  client: string;
+  inquiryDate: string;                // ISO 8601格式
+  customerId: string;
   article: string;
+  client: string;
   size: string;
   material: string;
   color: string;
@@ -109,13 +110,15 @@ export interface UpdateQuotation {
   packing: string;
   quantity: string;
   certifications: string;
-  sampleTime: ProductionTimeValue;
-  massTime: ProductionTimeValue;
-  quotePrices: QuotePrice[];        // 多数量阶梯报价
-  additionalFees?: AdditionalFee[];     // 附加费用
-  packingMethods?: PackingDetail[];     // 打包方式
+  price: string;
+  extraCost: string;
   status?: 'draft' | 'quoted' | 'ordered' | 'canceled';
   notes?: string;
+  sampleTime?: ProductionTime;
+  massTime?: ProductionTime;
+  quotePrices?: QuotePrice[];        // 多数量阶梯报价
+  additionalFees?: AdditionalFee[];     // 附加费用
+  packingMethods?: PackingDetail[];     // 打包方式
 }
 
 // 报价响应DTO（用于前端展示）

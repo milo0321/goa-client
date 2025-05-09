@@ -4,9 +4,9 @@ import { InputNumber, Select, Radio, Form, Space } from 'antd';
 const { Option } = Select;
 
 export type ProductionTimeValue = {
-  type: 'exact' | 'range';
-  from: number;
-  to?: number;
+  timeType: 'exact' | 'range';
+  fromTime: number;
+  toTime?: number;
   unit: 'days' | 'months';
 };
 
@@ -28,8 +28,8 @@ export const ProductionTimeInput: React.FC<ProductionTimeInputProps> = ({
   return (
     <Form.Item label={label} style={{ marginBottom: 16 }}>
       <Radio.Group
-        value={value.type}
-        onChange={e => handleChange({ type: e.target.value })}
+        value={value.timeType}
+        onChange={e => handleChange({ timeType: e.target.value })}
         style={{ marginBottom: 8 }}
       >
         <Radio value="exact">Exact</Radio>
@@ -39,15 +39,15 @@ export const ProductionTimeInput: React.FC<ProductionTimeInputProps> = ({
       <Space>
         <InputNumber
           min={0}
-          value={value.from}
-          onChange={val => handleChange({ from: val || 0 })}
-          placeholder={value.type === 'exact' ? 'Days' : 'From'}
+          value={value.fromTime}
+          onChange={val => handleChange({ fromTime: val || 0 })}
+          placeholder={value.timeType === 'exact' ? 'Days' : 'From'}
         />
-        {value.type === 'range' && (
+        {value.timeType === 'range' && (
           <InputNumber
-            min={value.from || 0}
-            value={value.to}
-            onChange={val => handleChange({ to: val || 0 })}
+            min={value.fromTime || 0}
+            value={value.toTime}
+            onChange={val => handleChange({ toTime: val || 0 })}
             placeholder="To"
           />
         )}

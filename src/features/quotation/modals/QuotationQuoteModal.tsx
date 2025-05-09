@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { notification } from 'antd';
-import { QuotePrice, AdditionalFee, PackingDetail, ProductionTimeValue } from '../types/quotation.types';
+import { QuotePrice, AdditionalFee, PackingDetail, ProductionTime } from '../types/quotation.types';
 import { useCustomerStore } from '../../customer/store/customer.store';
 import { useQuotationStore } from '../store/quotation.store';
 import { GenericForm } from '../../../components/GenericForm';
@@ -36,18 +36,18 @@ export default function QuotationQuoteModal({
 
   const [quotePrices, setQuotePrices] = useState<QuotePrice[]>([]);
   const [additionalFees, setAdditionalFees] = useState<AdditionalFee[]>([]);
-  const [packingMethods, setPackingMethods] = useState<PackingDetail[]>([]);
+  const [packingDetails, setPackingDetails] = useState<PackingDetail[]>([]);
   const [customerName, setCustomerName] = useState<string>('');
-  const [sampleTime, setSampleTime] = useState<ProductionTimeValue>({
-    type: 'range',
-    from: 10,
-    to: 15,
+  const [sampleTime, setSampleTime] = useState<ProductionTime>({
+    timeType: 'range',
+    fromTime: 10,
+    toTime: 15,
     unit: 'days',
   });
 
-  const [massTime, setMassTime] = useState<ProductionTimeValue>({
-    type: 'exact',
-    from: 30,
+  const [massTime, setMassTime] = useState<ProductionTime>({
+    timeType: 'exact',
+    fromTime: 30,
     unit: 'days',
   });
 
@@ -67,25 +67,28 @@ export default function QuotationQuoteModal({
       setCurrentQuotation(quotation);
       setQuotePrices(quotation.quotePrices || []);
       setAdditionalFees(quotation.additionalFees || []);
-      setPackingMethods(quotation.packingMethods || []);
+      setPackingDetails(quotation.packingDetails || []);
+      setSampleTime(quotation.sampleTime || null);
+      setMassTime(quotation.massTime || null);
     }
   }, [quotationId, quotations, customers, customerLoading, fetchCustomers, setCurrentQuotation]);
 
   const handleSubmit = async (baseData: {
-    productName: string;
     customerId: string;
     inquiryDate: string;
-    sampleProductionTime?: string;
-    massProductionTime?: string;
+    sampleTime?: string;
+    massTime?: string;
     notes?: string;
   }) => {
     try {
       await updateItem(quotationId, {
         ...baseData,
         status: 'quoted', // 强制标记为 quoted
-        quantityTiers: quotePrices,
-        additionalFees,
-        packingMethods
+        quotePrices: quotePrices,
+        additionalFees: additionalFees,
+        packingDetails: packingDetails,
+        sampleTime: sampleTime,
+        massTime: massTime,
       });
       notification.success({ message: 'Quotation submitted successfully!' });
       onSubmitSuccess?.();
@@ -150,13 +153,13 @@ export default function QuotationQuoteModal({
           submitText="Submit Quotation"
         >
           <ProductionTimeInput
-            label="Sample Production Time"
+            label="Sample Time"
             value={sampleTime}
             onChange={setSampleTime}
           />
 
           <ProductionTimeInput
-            label="Mass Production Time"
+            label="Mass Time"
             value={massTime}
             onChange={setMassTime}
           />
@@ -169,8 +172,8 @@ export default function QuotationQuoteModal({
             setAdditionalFees={setAdditionalFees}
           />
           <PackingMethodInput
-            packingMethods={packingMethods}
-            setPackingMethods={setPackingMethods}
+            packingMethods={packingDetails}
+            setPackingMethods={setPackingDetails}
           />
         </GenericForm>
       </div>

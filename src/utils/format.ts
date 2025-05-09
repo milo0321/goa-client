@@ -1,4 +1,4 @@
-import { PackingDetail, ProductionTimeValue } from '../features/quotation/types/quotation.types';
+import { PackingDetail, ProductionTime } from '../features/quotation/types/quotation.types';
 
 export const formatPackingMethodDescription = (method: PackingDetail): string => {
   const inner = method.innerPack?.value ? `${method.innerPack.value}${method.innerPack.unit || ''}` : '';
@@ -13,7 +13,7 @@ export const formatPackingMethodDescription = (method: PackingDetail): string =>
   return [inner, outer, size, weight].filter(Boolean).join(', ');
 };
 
-export const formatProductionTime = (value: ProductionTimeValue): string => {
+export const formatProductionTime = (value: ProductionTime): string => {
   const { type, from, to, unit } = value;
 
   if (type === 'exact') {
