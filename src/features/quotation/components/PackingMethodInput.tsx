@@ -31,10 +31,10 @@ export const PackingMethodInput = ({
     setPackingMethods([
       ...packingMethods,
       {
-        innerPack: { value: '', unit: 'pcs/bag' },
-        outerPack: { value: '', unit: 'pcs/carton' },
-        cartonSize: { length: '', width: '', height: '', unit: 'cm' },
-        weight: { value: '', unit: 'kg/carton' },
+        innerPack: { value: 0, unit: 'pcs/bag' },
+        outerPack: { value: 0, unit: 'pcs/carton' },
+        cartonSize: { length: 0, width: 0, height: 0, unit: 'cm' },
+        weight: { value: 0, unit: 'kg/carton' },
       },
     ]);
   };

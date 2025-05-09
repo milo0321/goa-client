@@ -25,7 +25,7 @@ export interface AdditionalFee {
 }
 
 export interface PackingField {
-  value?: string;
+  value?: number;
   unit?: string;
 }
 
@@ -33,7 +33,7 @@ export interface SizeField {
   length?: number;
   width?: number;
   height?: number;
-  unit?: number;
+  unit?: string;
 }
 
 export interface PackingDetail {
