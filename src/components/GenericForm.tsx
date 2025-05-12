@@ -38,10 +38,22 @@ export const GenericForm: React.FC<GenericFormProps> = ({
     }
   }, [initialData, formRef, form, fields]);
 
+  const handleFinish = (values: any) => {
+    const convertedValues: Record<string, any> = { ...values };
+
+    fields.forEach(field => {
+      if (field.type === 'date' && values[field.name]) {
+        convertedValues[field.name] = values[field.name].valueOf(); // 转换成时间戳
+      }
+    });
+
+    onSubmit(convertedValues);
+  };
+
   return (
     <Form
       form={formRef?.current || form}
-      onFinish={onSubmit}
+      onFinish={handleFinish}
       layout="vertical"
     >
       {fields.map((field) => {
@@ -66,7 +78,7 @@ export const GenericForm: React.FC<GenericFormProps> = ({
             );
             break;
           case 'date':
-            fieldElement = <DatePicker style={{ width: '100%' }} />;
+            fieldElement = <DatePicker showTime style={{ width: '100%' }} />;
             break;
           case 'number':
             fieldElement = <InputNumber style={{ width: '100%' }} />;

@@ -98,7 +98,7 @@ export default function QuotationDetailModal({ quotationId, onClose }: Quotation
   }
 
   const displayFields = [
-    { label: 'Inquiry Date', value: new Date(currentQuotation.inquiryDate).toLocaleDateString() },
+    { label: 'Inquiry Date', value: new Date(currentQuotation.inquiryDate).toLocaleString() },
     { label: 'Customer', value: customerName },
     { label: 'Article', value: currentQuotation.article },
     { label: 'Client', value: currentQuotation.client },
