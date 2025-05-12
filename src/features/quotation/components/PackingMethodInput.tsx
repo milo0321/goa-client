@@ -2,12 +2,25 @@ import React from 'react';
 import { Input, Button, Row, Col, Space } from 'antd';
 import { IconTrash, IconPlus, IconPackages } from '@tabler/icons-react';
 import { PackingDetail } from '../types/quotation.types';
-import { formatPackingMethodDescription } from '../../../utils/format';
+import { formatPackingDetail } from '../../../utils/format';
 
 interface PackingMethodInputProps {
   packingMethods: PackingDetail[];
   setPackingMethods: React.Dispatch<React.SetStateAction<PackingDetail[]>>;
 }
+
+const fieldTypes: Record<string, 'integer' | 'float' | 'string'> = {
+  'bagPack.value': 'integer',
+  'bagPack.unit': 'string',
+  'cartonPack.value': 'integer',
+  'cartonPack.unit': 'string',
+  'cartonSize.length': 'float',
+  'cartonSize.width': 'float',
+  'cartonSize.height': 'float',
+  'cartonSize.unit': 'string',
+  'weight.value': 'float',
+  'weight.unit': 'string',
+};
 
 export const PackingMethodInput = ({
   packingMethods,
@@ -19,11 +32,25 @@ export const PackingMethodInput = ({
     subfield: string,
     value: string
   ) => {
+    const key = `${field}.${subfield}`;
+    const type = fieldTypes[key];
+
     const updated = [...packingMethods];
+    let parsedValue: any = value;
+
+    if (type === 'integer') {
+      const int = parseInt(value, 10);
+      parsedValue = !isNaN(int) && int >= 0 ? int : undefined;
+    } else if (type === 'float') {
+      const float = parseFloat(value);
+      parsedValue = !isNaN(float) && float >= 0 ? float : undefined;
+    }
+
     updated[index][field] = {
       ...(updated[index][field] || {}),
-      [subfield]: value,
+      [subfield]: parsedValue,
     };
+
     setPackingMethods(updated);
   };
 
@@ -31,9 +58,9 @@ export const PackingMethodInput = ({
     setPackingMethods([
       ...packingMethods,
       {
-        innerPack: { value: 0, unit: 'pcs/bag' },
-        outerPack: { value: 0, unit: 'pcs/carton' },
-        cartonSize: { length: 0, width: 0, height: 0, unit: 'cm' },
+        bagPack: { value: 0, unit: 'pcs/bag' },
+        cartonPack: { value: 0, unit: 'pcs/carton' },
+        cartonSize: { length: 0.0, width: 0.0, height: 0.0, unit: 'cm' },
         weight: { value: 0, unit: 'kg/carton' },
       },
     ]);
@@ -66,32 +93,32 @@ export const PackingMethodInput = ({
           <Row gutter={16}>
             <Col span={6}>
               <Space direction="vertical" size={4}>
-                <label>Inner Pack</label>
+                <label>Bag Pack</label>
                 <Input
                   placeholder="e.g. 100"
-                  value={method.innerPack?.value}
-                  onChange={e => handleChange(index, 'innerPack', 'value', e.target.value)}
+                  value={method.bagPack?.value}
+                  onChange={e => handleChange(index, 'bagPack', 'value', e.target.value)}
                 />
                 <Input
                   placeholder="e.g. pcs/bag"
-                  value={method.innerPack?.unit}
-                  onChange={e => handleChange(index, 'innerPack', 'unit', e.target.value)}
+                  value={method.bagPack?.unit}
+                  onChange={e => handleChange(index, 'bagPack', 'unit', e.target.value)}
                 />
               </Space>
             </Col>
 
             <Col span={6}>
               <Space direction="vertical" size={4}>
-                <label>Outer Pack</label>
+                <label>Carton Pack</label>
                 <Input
                   placeholder="e.g. 500"
-                  value={method.outerPack?.value}
-                  onChange={e => handleChange(index, 'outerPack', 'value', e.target.value)}
+                  value={method.cartonPack?.value}
+                  onChange={e => handleChange(index, 'cartonPack', 'value', e.target.value)}
                 />
                 <Input
                   placeholder="e.g. pcs/carton"
-                  value={method.outerPack?.unit}
-                  onChange={e => handleChange(index, 'outerPack', 'unit', e.target.value)}
+                  value={method.cartonPack?.unit}
+                  onChange={e => handleChange(index, 'cartonPack', 'unit', e.target.value)}
                 />
               </Space>
             </Col>
@@ -153,7 +180,7 @@ export const PackingMethodInput = ({
           </Row>
 
           <p className="mt-2 text-gray-600 text-sm">
-            <strong>Preview:</strong> {formatPackingMethodDescription(method)}
+            <strong>Preview:</strong> {formatPackingDetail(method)}
           </p>
         </div>
       ))}

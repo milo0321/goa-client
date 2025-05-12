@@ -38,10 +38,10 @@ export function createResourceStore<T extends BaseEntity, CreateT, UpdateT>(
           initialized: true,
         });
       } catch (err) {
-        set({ 
+        set({
           error: err instanceof Error ? err.message : 'Request failed',
-          initialized: true, 
-          loading: false 
+          initialized: true,
+          loading: false
         });
       }
     },

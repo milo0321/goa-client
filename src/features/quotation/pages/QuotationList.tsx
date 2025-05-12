@@ -77,7 +77,6 @@ export default function QuotationList() {
             onEdit={setEditingQuotationId}
             onDelete={handleDelete}
             onView={setViewQuotationId}
-            onExport={handleDelete}
           />
 
           {/* 分页控制 - 复用相同组件 */}
@@ -128,10 +127,6 @@ export default function QuotationList() {
         <QuotationDetailModal
           quotationId={viewQuotationId}
           onClose={() => setViewQuotationId(null)}
-          onSubmitSuccess={() => {
-            setViewQuotationId(null);
-            handleRefresh();
-          }}
         />
       )}
     </div>

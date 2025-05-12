@@ -1,11 +1,12 @@
 // components/QuotationDetailView.tsx
 import { useEffect, useState, useRef } from 'react';
 import { Button } from 'antd';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import { GenericModal } from '../../../components/GenericModal';
 import { useQuotationStore } from '../store/quotation.store';
 import { useCustomerStore } from '../../customer/store/customer.store';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
+import { formatQuotePrices, formatProductionTime, formatPackingDetails, formatAdditionalFee } from '../../../utils/format';
 
 interface QuotationDetailViewProps {
   quotationId: string;
@@ -97,8 +98,8 @@ export default function QuotationDetailModal({ quotationId, onClose }: Quotation
   }
 
   const displayFields = [
-    { label: 'Customer', value: customerName },
     { label: 'Inquiry Date', value: new Date(currentQuotation.inquiryDate).toLocaleDateString() },
+    { label: 'Customer', value: customerName },
     { label: 'Article', value: currentQuotation.article },
     { label: 'Client', value: currentQuotation.client },
     { label: 'Size', value: currentQuotation.size },
@@ -109,6 +110,11 @@ export default function QuotationDetailModal({ quotationId, onClose }: Quotation
     { label: 'Quantity', value: currentQuotation.quantity },
     { label: 'Certifications', value: currentQuotation.certifications },
     { label: 'Details', value: currentQuotation.details },
+    { label: 'Prices', value: formatQuotePrices(currentQuotation.quotePrices) },
+    { label: 'Sample Time', value: formatProductionTime(currentQuotation.sampleTime) },
+    { label: 'Mass Time', value: formatProductionTime(currentQuotation.massTime) },
+    { label: 'Fee', value: formatAdditionalFee(currentQuotation.additionalFees || []) },
+    { label: 'Packing', value: formatPackingDetails(currentQuotation.packingDetails || []) },
   ];
 
   return (

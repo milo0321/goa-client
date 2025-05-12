@@ -1,16 +1,10 @@
 import { useQuotationStore } from '../store/quotation.store';
 import { GenericTable } from '../../../components/GenericTable';
 import { ActionButton } from '../../../components/ActionButton';
+import { Quotation } from '../types/quotation.types';
 
 interface QuotationTableProps {
-  data: Array<{
-    id: string;
-    article: string;
-    customerName: string;
-    quantity: string;
-    status: 'draft' | 'quoted' | 'ordered' | 'canceled';
-    inquiryDate: string;
-  }>;
+  data: Array<Quotation>;
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;
   onQuote: (id: string) => void;
@@ -71,7 +65,7 @@ export function QuotationTable({
             <div className="text-sm font-medium text-gray-900">{quotation.article}</div>
           </td>
           <td className="px-6 py-4 whitespace-nowrap text-left">
-            <div className="text-sm text-gray-500">{quotation.customerName || '-'}</div>
+            <div className="text-sm text-gray-500">{quotation.customer?.name || '-'}</div>
           </td>
           <td className="px-6 py-4 whitespace-nowrap text-left">
             <div className="text-sm text-gray-500">{quotation.quantity || '-'}</div>

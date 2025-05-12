@@ -37,8 +37,8 @@ export interface SizeField {
 }
 
 export interface PackingDetail {
-  innerPack?: PackingField;
-  outerPack?: PackingField;
+  bagPack?: PackingField;
+  cartonPack?: PackingField;
   cartonSize?: SizeField;
   weight?: PackingField;
 }
@@ -131,7 +131,7 @@ export interface QuotationResponse extends Quotation {
 export interface QuotationPaginationParams extends PaginationParams {
   sortBy?: keyof Quotation;
   status?: 'draft' | 'quoted' | 'ordered' | 'canceled'; // 过滤状态
-  productName?: string;
+  article?: string;
   customerId?: string;
   dateRange?: [string, string];       // 询价日期范围
 }

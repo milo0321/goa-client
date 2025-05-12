@@ -1,10 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
+import { notification } from 'antd';
 import { useCustomerStore } from '../../customer/store/customer.store';
 import { useQuotationStore } from '../store/quotation.store';
 import { GenericForm } from '../../../components/GenericForm';
 import { GenericModal } from '../../../components/GenericModal';
-import { notification } from 'antd';
-import { AdditionalFee } from '../types/quotation.types';
 
 interface QuotationEditModalProps {
   quotationId: string;
@@ -26,9 +25,6 @@ export default function QuotationEditModal({
 
   const { items: customers, fetchItems: fetchCustomers, loading: customerLoading } = useCustomerStore(); // 加载客户数据
 
-  // 本地状态管理复杂表单数据
-  const [additionalFees, setAdditionalFees] = useState<AdditionalFee[]>([]);
-
   useEffect(() => {
     if (!customers.length && !customerLoading) {
       fetchCustomers(); // 加载客户列表
@@ -37,12 +33,11 @@ export default function QuotationEditModal({
     const quotation = quotations.find(q => q.id === quotationId);
     if (quotation) {
       setCurrentQuotation(quotation);
-      setAdditionalFees(quotation.additionalFees || []);
     }
   }, [quotationId, quotations, customers, customerLoading, fetchCustomers, setCurrentQuotation]);
 
   const handleSubmit = async (baseData: {
-    productName: string;
+    article: string;
     customerId: string;
     inquiryDate: string;
     status: 'draft' | 'quoted' | 'ordered' | 'canceled';
@@ -50,11 +45,15 @@ export default function QuotationEditModal({
   }) => {
     try {
       console.log('Submitting form data:', baseData);
-      console.log('Additional Fees:', additionalFees);
+      const merged = { ...currentQuotation }; // 克隆 currentQuotation 为主
+      Object.entries(baseData).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          (merged as any)[key] = value;
+        }
+      });
 
       await updateItem(quotationId, {
-        ...baseData,
-        additionalFees
+        ...merged
       });
       notification.success({ message: 'Quotation updated!' });
       onSubmitSuccess?.();

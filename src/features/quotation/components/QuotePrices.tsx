@@ -136,10 +136,12 @@ export const QuotePrices = ({ quotePrices, setQuotePrices }: QuotePricesProps) =
 
           {quote.prices.map((price, tierIndex) => (
             <Row key={tierIndex} gutter={12} align="middle" className="mb-2" wrap={false}>
-              <Col flex="100px">
+              <Col flex="160px">
                 <Input
                   addonBefore="Qty"
                   type="number"
+                  step={10}
+                  min={10}
                   value={price.quantity}
                   onChange={e => {
                     const newPrices = [...quotePrices];
@@ -148,11 +150,12 @@ export const QuotePrices = ({ quotePrices, setQuotePrices }: QuotePricesProps) =
                   }}
                 />
               </Col>
-              <Col flex="140px">
+              <Col flex="160px">
                 <Input
                   addonBefore="Unit"
                   type="number"
-                  step="0.0001"
+                  step={0.0001}
+                  min={0}
                   value={price.unitPrice}
                   onChange={e => {
                     const newPrices = [...quotePrices];

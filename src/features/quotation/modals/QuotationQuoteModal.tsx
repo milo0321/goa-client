@@ -65,11 +65,11 @@ export default function QuotationQuoteModal({
         }
       }
       setCurrentQuotation(quotation);
-      setQuotePrices(quotation.quotePrices || []);
-      setAdditionalFees(quotation.additionalFees || []);
-      setPackingDetails(quotation.packingDetails || []);
-      setSampleTime(quotation.sampleTime || null);
-      setMassTime(quotation.massTime || null);
+      // setQuotePrices(quotation.quotePrices || []);
+      // setAdditionalFees(quotation.additionalFees || []);
+      // setPackingDetails(quotation.packingDetails || []);
+      // setSampleTime(quotation.sampleTime);
+      // setMassTime(quotation.massTime);
     }
   }, [quotationId, quotations, customers, customerLoading, fetchCustomers, setCurrentQuotation]);
 
@@ -81,8 +81,15 @@ export default function QuotationQuoteModal({
     notes?: string;
   }) => {
     try {
+      const merged = { ...currentQuotation }; // 克隆 currentQuotation 为主
+      Object.entries(baseData).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          (merged as any)[key] = value;
+        }
+      });
+
       await updateItem(quotationId, {
-        ...baseData,
+        ...merged,
         status: 'quoted', // 强制标记为 quoted
         quotePrices: quotePrices,
         additionalFees: additionalFees,
@@ -135,7 +142,7 @@ export default function QuotationQuoteModal({
 
   return (
     <GenericModal isOpen title="Quote Quotation" onClose={onClose}>
-      <div className="max-h-[160vh] overflow-y-auto space-y-6">
+      <div className="max-h-[80vh] overflow-y-auto space-y-6">
         <div className="text-sm text-gray-800 space-y-3">
           {displayFields
             .filter((field) => field.value !== undefined && field.value !== null && field.value !== '')
