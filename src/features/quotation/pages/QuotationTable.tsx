@@ -64,10 +64,10 @@ export function QuotationTable({
           <td className="px-6 py-4 whitespace-nowrap text-left">
             <div className="text-sm font-medium text-gray-900">{quotation.article}</div>
           </td>
-          <td className="px-6 py-4 whitespace-nowrap text-left">
+          <td className="px-6 py-4 whitespace-nowrap text-left hidden sm:table-cell">
             <div className="text-sm text-gray-500">{quotation.customer?.name || '-'}</div>
           </td>
-          <td className="px-6 py-4 whitespace-nowrap text-left">
+          <td className="px-6 py-4 whitespace-nowrap text-left hidden sm:table-cell">
             <div className="text-sm text-gray-500">{quotation.quantity || '-'}</div>
           </td>
           <td className="px-6 py-4 whitespace-nowrap text-left">
@@ -75,7 +75,7 @@ export function QuotationTable({
               {quotation.status.toUpperCase()}
             </div>
           </td>
-          <td className="px-6 py-4 whitespace-nowrap text-left">
+          <td className="px-6 py-4 whitespace-nowrap text-left hidden sm:table-cell">
             <div className="text-sm text-gray-500">
               {new Date(quotation.inquiryDate).toLocaleDateString()}
             </div>

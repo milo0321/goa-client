@@ -7,6 +7,7 @@ interface GenericTableProps<T> {
     label: string;
     width?: string;
     align?: 'left' | 'center' | 'right';
+    hiddenOnMobile?: boolean; // 👈 新增字段
   }[];
   data: T[];
   renderRow: (item: T) => ReactNode;
@@ -29,7 +30,8 @@ export function GenericTable<T>({
             {headers.map((header) => (
               <th
                 key={header.key}
-                className={`px-6 py-3 text-${header.align || 'left'} text-xs font-medium text-gray-500 uppercase tracking-wider`}
+                className={`px-6 py-3 text-${header.align || 'left'} text-xs font-medium text-gray-500 uppercase tracking-wider ${
+      header.hiddenOnMobile ? 'hidden sm:table-cell' : ''}`}
                 style={{ width: header.width }}
               >
                 {header.label}
