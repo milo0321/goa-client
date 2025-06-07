@@ -20,7 +20,7 @@ export interface CreateCustomer {
 }
 
 // 更新DTO
-export interface UpdateCustomer extends Partial<CreateCustomer> { }
+export type UpdateCustomer = Partial<CreateCustomer>
 
 // 特定于客户的分页参数
 export interface CustomerPaginationParams extends PaginationParams {
