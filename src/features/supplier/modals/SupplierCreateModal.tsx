@@ -1,0 +1,48 @@
+import { useSupplierStore } from '../supplier.store';
+import { GenericModal } from '../../../components/GenericModal';
+import { GenericForm } from '../../../components/GenericForm';
+
+interface SupplierCreateModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSubmitSuccess?: () => void;
+}
+
+export function SupplierCreateModal({
+  isOpen,
+  onClose,
+  onSubmitSuccess,
+}: SupplierCreateModalProps) {
+  const { createItem, loading } = useSupplierStore();
+
+  const fields = [
+    { name: 'name', label: 'Name', type: 'text' as const, required: true },
+    { name: 'email', label: 'Email', type: 'email' as const, required: true },
+    { name: 'phone', label: 'Phone', type: 'tel' as const },
+    { name: 'company', label: 'Company', type: 'text' as const },
+    { name: 'position', label: 'Position', type: 'text' as const },
+    { name: 'address', label: 'Address', type: 'text' as const },
+  ];
+
+  const handleSubmit = async (data: any) => {
+    await createItem(data);
+    onSubmitSuccess?.();
+    onClose();
+  };
+
+  return (
+    <GenericModal
+      isOpen={isOpen}
+      title="Create New Supplier"
+      onClose={onClose}
+      isLoading={loading}
+    >
+      <GenericForm
+        fields={fields}
+        onSubmit={handleSubmit}
+        submitText="Create Supplier"
+        loading={loading}
+      />
+    </GenericModal>
+  );
+}
