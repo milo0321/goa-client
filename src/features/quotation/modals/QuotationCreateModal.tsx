@@ -17,7 +17,12 @@ export default function QuotationCreateModal({
   onClose,
   onSubmitSuccess,
 }: QuotationCreateModalProps) {
-  const { items: customers, loading: customerLoading, fetchItems: fetchCustomers } = useCustomerStore();
+  const {
+    items: customers,
+    loading: customerLoading,
+    initialized: customerInitialized,
+    fetchItems: fetchCustomers,
+  } = useCustomerStore();
   const { createItem } = useQuotationStore();
   const formRef = useRef(null);
   const [rawText, setRawText] = useState('');
@@ -29,21 +34,21 @@ export default function QuotationCreateModal({
   const handleSubmit = async (baseData: {
     customerId: string;
     article: string;
-    client: string,
-    size: string,
-    material: string,
-    color: string,
-    branding: string,
-    packing: string,
-    quantity: string,
-    certifications: string,
-    details: string,
+    client: string;
+    size: string;
+    material: string;
+    color: string;
+    branding: string;
+    packing: string;
+    quantity: string;
+    certifications: string;
+    details: string;
     inquiryDate: string;
     status: 'draft' | 'quoted' | 'ordered' | 'canceled';
   }) => {
     try {
       await createItem({
-        ...baseData
+        ...baseData,
       });
       onSubmitSuccess?.(); // 如果成功，调用成功回调
       onClose(); // 然后关闭模态框
@@ -58,10 +63,16 @@ export default function QuotationCreateModal({
 
   // 确保加载客户列表
   useEffect(() => {
-    if (!customers.length && !customerLoading) {
+    console.log('Checking customer load conditions:', {
+      length: customers.length,
+      loading: customerLoading,
+      initialized: customerInitialized,
+    });
+
+    if (!customers.length && !customerLoading && !customerInitialized) {
       fetchCustomers(); // 初始化加载客户
     }
-  }, [customers, customerLoading, fetchCustomers]);
+  }, [customers.length, customerLoading, customerInitialized, fetchCustomers]);
 
   // 点击解析
   const handleParseText = () => {
@@ -92,7 +103,6 @@ export default function QuotationCreateModal({
       quantity: [/Quantity:\s*(.+)/i],
     };
 
-
     for (const [key, regexList] of Object.entries(patterns)) {
       for (const regex of regexList) {
         const match = text.match(regex);
@@ -108,18 +118,59 @@ export default function QuotationCreateModal({
 
   // 基础表单字段
   const baseFields = [
-    { name: 'customerId', label: 'Customer', type: 'select' as const, options: customers.map(c => ({ value: c.id, label: c.name })), required: true },
-    { name: 'inquiryDate', label: 'Inquiry Date', type: 'date' as const, required: true },
-    { name: 'article', label: 'Article', type: 'text' as const, required: true },
+    {
+      name: 'customerId',
+      label: 'Customer',
+      type: 'select' as const,
+      options: customers.map((c) => ({ value: c.id, label: c.name })),
+      required: true,
+    },
+    {
+      name: 'inquiryDate',
+      label: 'Inquiry Date',
+      type: 'date' as const,
+      required: true,
+    },
+    {
+      name: 'article',
+      label: 'Article',
+      type: 'text' as const,
+      required: true,
+    },
     { name: 'client', label: 'Client', type: 'text' as const, required: false },
     { name: 'size', label: 'Size', type: 'text' as const, required: false },
-    { name: 'material', label: 'Material', type: 'text' as const, required: false },
+    {
+      name: 'material',
+      label: 'Material',
+      type: 'text' as const,
+      required: false,
+    },
     { name: 'color', label: 'Color', type: 'text' as const, required: false },
-    { name: 'branding', label: 'Branding', type: 'text' as const, required: false },
-    { name: 'packing', label: 'Packing', type: 'text' as const, required: false },
-    { name: 'quantity', label: 'Quantity', type: 'text' as const, required: false },
-    { name: 'certifications', label: 'Certifications', type: 'text' as const, required: false },
-    { name: 'details', label: 'Details', type: 'textarea' as const }
+    {
+      name: 'branding',
+      label: 'Branding',
+      type: 'text' as const,
+      required: false,
+    },
+    {
+      name: 'packing',
+      label: 'Packing',
+      type: 'text' as const,
+      required: false,
+    },
+    {
+      name: 'quantity',
+      label: 'Quantity',
+      type: 'text' as const,
+      required: false,
+    },
+    {
+      name: 'certifications',
+      label: 'Certifications',
+      type: 'text' as const,
+      required: false,
+    },
+    { name: 'details', label: 'Details', type: 'textarea' as const },
   ];
 
   return (

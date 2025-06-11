@@ -1,29 +1,56 @@
-import { BaseEntity, PaginationParams, PaginatedResponse, ApiResponse } from '../../types/base';
-import { Customer } from '../customer/types/customer.types';
+import { BaseEntity } from '../../types/base';
 
-// 运输方式定价
-export interface QuantityPrice {
-  quantity: number;                   // 数量（如5000/10000）
-  unitPrice: number;                  // 单价
-  currency?: string;                  // 货币类型（默认USD）
+export interface Order extends BaseEntity {
+  id: string;
+  orderNo: string;
+  orderArticle: string;
+  customerId: string;
+  customerOrderNo: string;
+  customerName: string;
+  currency: string;
+  paymentTerms: string;
+  deliveryTime: string; // ISO 格式的 UTC 时间
+  shippingMethod: string;
+  remarks?: string;
+  status?: string;
+  packingDetails?: PackingDetail[];
+  orderDate: string; // ISO 格式的 UTC 时间
+  createdAt: string;
+  updatedAt: string;
 }
 
-// 数量阶梯定价
-export interface QuotePrice {
-  method: 'air' | 'ship' | 'express'; // 运输方式
-  terms?: string;                     // 条款（如CNF FOB）
-  destination?: string;               // 目的地（如Germany)
-  prices: QuantityPrice[];            // 不同数量的价格
+export interface OrderItem {
+  id: string;
+  orderId: string;
+  itemNo: string;
+  article: string;
+  quantity: number;
+  unit: string;
+  unitPrice: number;
+  vatRate: number;
+  subtotal: number;
+  vatAmount: number;
+  total: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
-// 附加费用
-export interface AdditionalFee {
-  feeType: 'sampling' | 'mold' | 'certification' | string; // 费用类型
-  amount: number;                     // 金额
-  refundable: boolean;                // 是否可返还
-  conditions?: string;                // 返还条件（如"order >10000pcs"）
+export interface CostItem {
+  id: string;
+  orderId: string;
+  componentName: string;
+  componentType: string; // "Material" | "Molding" | "Shipping" 等
+  quantity: number;
+  unit: string;
+  unitCost: number;
+  totalCost: number;
+  supplierId?: string;
+  remarks?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
+// 打包详情字段复用服务端结构
 export interface PackingField {
   value?: number;
   unit?: string;
@@ -43,105 +70,87 @@ export interface PackingDetail {
   weight?: PackingField;
 }
 
-export type ProductionTime = {
-  timeType: 'exact' | 'range';
-  fromTime: number;
-  toTime?: number; // only present if type is 'range'
-  unit: 'days' | 'months';
-};
-
-// 主报价单实体
-export interface Order extends BaseEntity {
-  inquiryDate: string;                // ISO 8601格式
-  customerId: string;
-  customer?: Customer;                // 关联查询时可用
-  article: string;
-  client: string;
-  size: string;
-  material: string;
-  color: string;
-  details: string;
-  branding: string;
-  packing: string;
-  quantity: string;
-  certifications: string;
-  price: string;
-  extraCost: string;
-  sampleTime: ProductionTime;
-  massTime: ProductionTime;
-  quotePrices: QuotePrice[];        // 多数量阶梯报价
-  additionalFees?: AdditionalFee[];     // 附加费用
-  packingDetails?: PackingDetail[];     // 打包方式
-  status: 'draft' | 'quoted' | 'ordered' | 'canceled'; // 报价状态
-  notes?: string;
-}
-
-// 创建DTO
-export interface CreateOrder {
-  inquiryDate: string;                // ISO 8601格式
-  customerId: string;
-  article: string;
-  client: string;
-  size: string;
-  material: string;
-  color: string;
-  details: string;
-  branding: string;
-  packing: string;
-  quantity: string;
-  certifications: string;
-  price: string;
-  extraCost: string;
-  notes?: string;
-  status: 'draft' | 'quoted' | 'ordered' | 'canceled'; // 报价状态
-}
-
-// 更新/报价DTO
-export interface UpdateOrder {
-  inquiryDate: string;                // ISO 8601格式
-  customerId: string;
-  article: string;
-  client: string;
-  size: string;
-  material: string;
-  color: string;
-  details: string;
-  branding: string;
-  packing: string;
-  quantity: string;
-  certifications: string;
-  price: string;
-  extraCost: string;
-  status?: 'draft' | 'quoted' | 'ordered' | 'canceled';
-  notes?: string;
-  sampleTime?: ProductionTime;
-  massTime?: ProductionTime;
-  quotePrices?: QuotePrice[];        // 多数量阶梯报价
-  additionalFees?: AdditionalFee[];     // 附加费用
-  packingMethods?: PackingDetail[];     // 打包方式
-}
-
-// 报价响应DTO（用于前端展示）
-export interface OrderResponse extends Order {
-  totalPrice: number;                 // 计算后的总价
-  shippingOptions: string[];          // 可用的运输方式
-}
-
-// 分页查询参数
-export interface OrderPaginationParams extends PaginationParams {
+export interface OrderPaginationParams {
+  page: number;
+  limit: number;
   sortBy?: keyof Order;
-  status?: 'draft' | 'quoted' | 'ordered' | 'canceled'; // 过滤状态
-  article?: string;
+  status?: string;
   customerId?: string;
-  dateRange?: [string, string];       // 询价日期范围
+  dateRange?: [string, string]; // [startDate, endDate]
 }
 
-// 类型导出
-export type {
-  PaginationParams,
-  PaginatedResponse,
-  ApiResponse
-};
+export interface CreateOrder {
+  orderNo: string;
+  orderArticle: string;
+  customerId: string;
+  customerOrderNo: string;
+  customerName: string;
+  currency: string;
+  paymentTerms: string;
+  deliveryTime: string; // ISO 格式
+  shippingMethod: string;
+  orderDate: string; // ISO 格式
+  remarks?: string;
+  status?: string;
+  packingDetails?: PackingDetail[];
+  orderItems: CreateOrderItem[];
+  costItems?: CreateCostItem[];
+}
 
-// 实用类型
-export type FeeType = AdditionalFee['feeType'];
+export interface UpdateOrder {
+  orderNo?: string;
+  orderArticle?: string;
+  customerId?: string;
+  customerOrderNo?: string;
+  customerName?: string;
+  currency?: string;
+  paymentTerms?: string;
+  deliveryTime?: string;
+  shippingMethod?: string;
+  orderDate?: string;
+  remarks?: string;
+  status?: string;
+  packingDetails?: PackingDetail[];
+  orderItems?: UpdateOrderItem[];
+  costItems?: UpdateCostItem[];
+}
+
+export interface CreateOrderItem {
+  itemNo: string;
+  article: string;
+  quantity: number;
+  unit: string;
+  unitPrice: number;
+  vatRate: number;
+}
+
+export interface UpdateOrderItem {
+  id: string; // 必须有 ID 以识别更新目标
+  itemNo?: string;
+  article?: string;
+  quantity?: number;
+  unit?: string;
+  unitPrice?: number;
+  vatRate?: number;
+}
+
+export interface CreateCostItem {
+  componentName: string;
+  componentType: string;
+  quantity: number;
+  unit: string;
+  unitCost: number;
+  supplierId?: string;
+  remarks?: string;
+}
+
+export interface UpdateCostItem {
+  id: string;
+  componentName?: string;
+  componentType?: string;
+  quantity?: number;
+  unit?: string;
+  unitCost?: number;
+  supplierId?: string;
+  remarks?: string;
+}

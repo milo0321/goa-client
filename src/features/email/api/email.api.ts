@@ -1,27 +1,20 @@
-
 import {
+  createEntity,
+  deleteEntity,
   fetchEntities,
   fetchEntity,
-  createEntity,
-  updateEntity,
-  deleteEntity
-} from '../../../api/client.api';
-import {
-  EmailAccount,
-  CreateEmailAccount,
-  UpdateEmailAccount,
-} from '../types/email.types';
+  updateEntity
+} from '@/api/request';
+import { CreateEmailAccount, EmailAccount, UpdateEmailAccount } from '../types/email.types';
 
-import { PaginationParams } from '../../../types/base';
+import { PaginationParams } from '@/types/base';
 
 const ENDPOINT = '/emails/accounts';
 
-export const fetchEmailAccount = (
-  params?: PaginationParams
-) => fetchEntities<EmailAccount>(ENDPOINT, params);
+export const fetchEmailAccount = (params?: PaginationParams) =>
+  fetchEntities<EmailAccount>(ENDPOINT, params);
 
-export const getEmailAccount = (id: string) =>
-  fetchEntity<EmailAccount>(`${ENDPOINT}/${id}`);
+export const getEmailAccount = (id: string) => fetchEntity<EmailAccount>(`${ENDPOINT}/${id}`);
 
 export const createEmailAccount = (data: CreateEmailAccount) =>
   createEntity<EmailAccount, CreateEmailAccount>(ENDPOINT, data);
@@ -29,5 +22,4 @@ export const createEmailAccount = (data: CreateEmailAccount) =>
 export const updateEmailAccount = (id: string, data: UpdateEmailAccount) =>
   updateEntity<EmailAccount, UpdateEmailAccount>(`${ENDPOINT}/${id}`, data);
 
-export const deleteEmailAccount = (id: string) =>
-  deleteEntity(`${ENDPOINT}/${id}`);
+export const deleteEmailAccount = (id: string) => deleteEntity(`${ENDPOINT}/${id}`);

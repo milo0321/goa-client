@@ -1,78 +1,71 @@
 import {
-  fetchEntities,
-  fetchEntity,
-  createEntity,
-  updateEntity,
-  deleteEntity
-} from '../../api/client.api';
-import {
-  Order,
+  CostItem,
   CreateOrder,
-  UpdateOrder,
+  Order,
+  OrderItem,
   OrderPaginationParams,
-  QuotePrice,
-  AdditionalFee
+  UpdateCostItem,
+  UpdateOrder,
+  UpdateOrderItem
 } from './order.types';
 
-const ENDPOINT = '/orders';
+import {
+  createEntity,
+  deleteEntity,
+  fetchEntities,
+  fetchEntity,
+  updateEntity
+} from '@/api/request';
 
-// 获取报价单列表（带分页）
+const BASE_URL = '/orders';
+
+/**
+ * 获取订单列表（支持分页、筛选）
+ */
 export const fetchOrders = (params?: OrderPaginationParams) =>
-  fetchEntities<Order>(ENDPOINT, params);
+  fetchEntities<Order>(BASE_URL, params);
 
-// 获取单个报价单详情
-export const getOrder = (id: string) =>
-  fetchEntity<Order>(`${ENDPOINT}/${id}`);
+/**
+ * 获取订单详情
+ */
+export const getOrder = (id: string) => fetchEntity<Order>(`${BASE_URL}/${id}`);
 
-// 创建报价单（支持多阶梯和附加费用）
-export const createOrder = (data: CreateOrder) =>
-  createEntity<Order, CreateOrder>(ENDPOINT, {
-    ...data,
-    status: 'draft' // 自动设置初始状态
-  });
+/**
+ * 创建订单（包含子项）
+ */
+export const createOrder = (data: CreateOrder) => createEntity<Order, CreateOrder>(BASE_URL, data);
 
-// 更新报价单基础信息
+/**
+ * 更新订单（包含子项）
+ */
 export const updateOrder = (id: string, data: UpdateOrder) =>
-  updateEntity<Order, UpdateOrder>(`${ENDPOINT}/${id}`, data);
+  updateEntity<Order, UpdateOrder>(`${BASE_URL}/${id}`, data);
 
-// 提交报价（完整报价方案）
-export const submitOrder = (
-  id: string,
-  data: {
-    quotePrices: QuotePrice[];
-    additionalFees?: AdditionalFee[];
-  }
-) => updateEntity<Order, {
-  quotePrices: QuotePrice[];
-  additionalFees?: AdditionalFee[];
-  status: 'quoted';
-  quotedDate: string;
-}>(`${ENDPOINT}/${id}/submit`, {
-  ...data,
-  status: 'quoted',
-  quotedDate: new Date().toISOString()
-});
+/**
+ * 删除订单
+ */
+export const deleteOrder = (id: string) => deleteEntity(`${BASE_URL}/${id}`);
 
-// 价格计算服务
-export const calculatePrice = (params: {
-  productId?: string;
-  quantity: number;
-  shippingMethod: 'air' | 'ship';
-}) => {
-  return updateEntity<{
-    price: number;
-    currency: string
-  }, typeof params>(
-    `${ENDPOINT}/calculate-price`,
-    params
-  );
-};
+/**
+ * 获取订单商品项
+ */
+export const fetchOrderItems = (orderId: string) =>
+  fetchEntities<OrderItem>(`${BASE_URL}/${orderId}/items`);
 
-// 删除报价单
-export const deleteOrder = (id: string) =>
-  deleteEntity(`${ENDPOINT}/${id}`);
+export const updateOrderItem = (orderId: string, item: UpdateOrderItem) =>
+  updateEntity<OrderItem, UpdateOrderItem>(`/orders/${orderId}/items/${item.id}`, item);
 
-// 导出报价单为PDF
-export const exportOrder = (id: string) => {
-  return fetchEntity<{ url: string }>(`${ENDPOINT}/${id}/export`);
-};
+export const deleteOrderItem = (orderId: string, itemId: string) =>
+  deleteEntity(`/orders/${orderId}/items/${itemId}`);
+
+/**
+ * 获取订单成本项
+ */
+export const fetchCostItems = (orderId: string) =>
+  fetchEntities<CostItem>(`${BASE_URL}/${orderId}/costs`);
+
+export const updateCostItem = (orderId: string, item: UpdateCostItem) =>
+  updateEntity<CostItem, UpdateCostItem>(`/orders/${orderId}/costs/${item.id}`, item);
+
+export const deleteCostItem = (orderId: string, itemId: string) =>
+  deleteEntity(`/orders/${orderId}/costs/${itemId}`);

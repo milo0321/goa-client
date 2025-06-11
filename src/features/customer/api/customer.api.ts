@@ -1,25 +1,23 @@
 import {
+  createEntity,
+  deleteEntity,
   fetchEntities,
   fetchEntity,
-  createEntity,
-  updateEntity,
-  deleteEntity
-} from '../../../api/client.api';
+  updateEntity
+} from '@/api/request';
 import {
-  Customer,
   CreateCustomer,
-  UpdateCustomer,
-  CustomerPaginationParams
+  Customer,
+  CustomerPaginationParams,
+  UpdateCustomer
 } from '../types/customer.types';
 
 const ENDPOINT = '/customers';
 
-export const fetchCustomers = (
-  params?: CustomerPaginationParams
-) => fetchEntities<Customer>(ENDPOINT, params);
+export const fetchCustomers = (params?: CustomerPaginationParams) =>
+  fetchEntities<Customer>(ENDPOINT, params);
 
-export const getCustomer = (id: string) =>
-  fetchEntity<Customer>(`${ENDPOINT}/${id}`);
+export const getCustomer = (id: string) => fetchEntity<Customer>(`${ENDPOINT}/${id}`);
 
 export const createCustomer = (data: CreateCustomer) =>
   createEntity<Customer, CreateCustomer>(ENDPOINT, data);
@@ -27,5 +25,4 @@ export const createCustomer = (data: CreateCustomer) =>
 export const updateCustomer = (id: string, data: UpdateCustomer) =>
   updateEntity<Customer, UpdateCustomer>(`${ENDPOINT}/${id}`, data);
 
-export const deleteCustomer = (id: string) =>
-  deleteEntity(`${ENDPOINT}/${id}`);
+export const deleteCustomer = (id: string) => deleteEntity(`${ENDPOINT}/${id}`);
