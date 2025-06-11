@@ -1,4 +1,4 @@
-import { BaseEntity } from '../../types/base';
+import { BaseEntity } from '@/types/base';
 
 export interface Order extends BaseEntity {
   id: string;

@@ -2,8 +2,9 @@ import { useEffect } from 'react';
 import { notification } from 'antd';
 import { useCustomerStore } from '../../customer/store/customer.store';
 import { useOrderStore } from '../order.store';
-import { GenericForm } from '../../../components/GenericForm';
-import { GenericModal } from '../../../components/GenericModal';
+import { GenericForm } from '@/components/GenericForm';
+import { GenericModal } from '@/components/GenericModal';
+import { logger } from '@/utils/logger';
 
 interface OrderEditModalProps {
   orderId: string;
@@ -11,11 +12,28 @@ interface OrderEditModalProps {
   onSubmitSuccess?: () => void;
 }
 
+interface BaseOrderFormData {
+  article: string;
+  customerId: string;
+  inquiryDate: string;
+  status: 'draft' | 'quoted' | 'ordered' | 'canceled';
+  notes?: string;
+  client?: string;
+  size?: string;
+  material?: string;
+  color?: string;
+  branding?: string;
+  packing?: string;
+  quantity?: string;
+  certifications?: string;
+  details?: string;
+}
+
 export default function OrderEditModal({
-  orderId,
-  onClose,
-  onSubmitSuccess,
-}: OrderEditModalProps) {
+                                         orderId,
+                                         onClose,
+                                         onSubmitSuccess,
+                                       }: OrderEditModalProps) {
   const {
     currentItem: currentOrder,
     items: orders,
@@ -27,11 +45,13 @@ export default function OrderEditModal({
     items: customers,
     fetchItems: fetchCustomers,
     loading: customerLoading,
-  } = useCustomerStore(); // 加载客户数据
+  } = useCustomerStore();
 
   useEffect(() => {
     if (!customers.length && !customerLoading) {
-      fetchCustomers(); // 加载客户列表
+      fetchCustomers().catch((err: unknown) => {
+        logger.error('Failed to fetch customers:', err);
+      });
     }
 
     const order = orders.find((q) => q.id === orderId);
@@ -47,29 +67,22 @@ export default function OrderEditModal({
     setCurrentOrder,
   ]);
 
-  const handleSubmit = async (baseData: {
-    article: string;
-    customerId: string;
-    inquiryDate: string;
-    status: 'draft' | 'quoted' | 'ordered' | 'canceled';
-    notes?: string;
-  }) => {
+  const handleSubmit = async (baseData: BaseOrderFormData) => {
     try {
       console.log('Submitting form data:', baseData);
-      const merged = { ...currentOrder }; // 克隆 currentOrder 为主
+      const merged = { ...currentOrder };
+
       Object.entries(baseData).forEach(([key, value]) => {
         if (value !== undefined && value !== null) {
-          (merged as any)[key] = value;
+          (merged as Record<string, unknown>)[key] = value;
         }
       });
 
-      await updateItem(orderId, {
-        ...merged,
-      });
+      await updateItem(orderId, merged);
       notification.success({ message: 'Order updated!' });
       onSubmitSuccess?.();
       onClose();
-    } catch (err) {
+    } catch (err: unknown) {
       notification.error({
         message: 'Update failed',
         description: err instanceof Error ? err.message : String(err),
@@ -83,7 +96,6 @@ export default function OrderEditModal({
     );
   }
 
-  // 基础表单字段
   const baseFields = [
     {
       name: 'customerId',
@@ -137,19 +149,22 @@ export default function OrderEditModal({
       type: 'text' as const,
       required: false,
     },
-    { name: 'details', label: 'Details', type: 'textarea' as const },
+    {
+      name: 'details',
+      label: 'Details',
+      type: 'textarea' as const,
+    },
   ];
 
   return (
     <GenericModal isOpen title="Edit Order" onClose={onClose}>
       <div className="max-h-[80vh] overflow-y-auto space-y-6">
-        {/* 基础信息表单 */}
         <GenericForm
           initialData={currentOrder}
           fields={baseFields}
           onSubmit={handleSubmit}
           submitText="Update Order"
-        ></GenericForm>
+        />
       </div>
     </GenericModal>
   );

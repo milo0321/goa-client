@@ -6,16 +6,10 @@ import {
   OrderPaginationParams,
   UpdateCostItem,
   UpdateOrder,
-  UpdateOrderItem
+  UpdateOrderItem,
 } from './order.types';
 
-import {
-  createEntity,
-  deleteEntity,
-  fetchEntities,
-  fetchEntity,
-  updateEntity
-} from '@/api/request';
+import { createEntity, deleteEntity, fetchEntities, fetchEntity, updateEntity } from '@/api/request';
 
 const BASE_URL = '/orders';
 
@@ -58,6 +52,10 @@ export const updateOrderItem = (orderId: string, item: UpdateOrderItem) =>
 export const deleteOrderItem = (orderId: string, itemId: string) =>
   deleteEntity(`/orders/${orderId}/items/${itemId}`);
 
+export async function saveOrderItems(orderId: string, items: OrderItem[]) {
+  return createEntity(`/orders/${orderId}/items`, items);
+}
+
 /**
  * 获取订单成本项
  */
@@ -69,3 +67,7 @@ export const updateCostItem = (orderId: string, item: UpdateCostItem) =>
 
 export const deleteCostItem = (orderId: string, itemId: string) =>
   deleteEntity(`/orders/${orderId}/costs/${itemId}`);
+
+export async function saveCostItems(orderId: string, items: CostItem[]) {
+  return createEntity(`/orders/${orderId}/costs`, items);
+}

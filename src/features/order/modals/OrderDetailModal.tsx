@@ -1,43 +1,41 @@
 // components/OrderDetailView.tsx
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Button } from 'antd';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { GenericModal } from '../../../components/GenericModal';
+import { GenericModal } from '@/components/GenericModal';
 import { useOrderStore } from '../order.store';
 import { useCustomerStore } from '../../customer/store/customer.store';
-import {
-  formatQuotePrices,
-  formatProductionTime,
-  formatPackingDetails,
-  formatAdditionalFee,
-} from '../../../utils/format';
+import { formatPackingDetails } from '@/utils/format';
+import type { PackingDetail } from '../order.types';
+import { logger } from '@/utils/logger';
 
 interface OrderDetailViewProps {
   orderId: string;
   onClose: () => void;
 }
 
-export default function OrderDetailModal({
-  orderId,
-  onClose,
-}: OrderDetailViewProps) {
+export default function OrderDetailModal({ orderId, onClose }: OrderDetailViewProps) {
   const {
     currentItem: currentOrder,
     items: orders,
     setCurrentItem: setCurrentOrder,
   } = useOrderStore();
+
   const {
     items: customers,
     fetchItems: fetchCustomers,
     loading: customerLoading,
-  } = useCustomerStore(); // 加载客户数据
+  } = useCustomerStore();
+
   const [customerName, setCustomerName] = useState<string>('');
   const detailRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!customers.length && !customerLoading) {
-      fetchCustomers(); // 加载客户列表
+      fetchCustomers().catch((err) => {
+        logger.error('Failed to fetch customers:', err);
+      });
     }
 
     const order = orders.find((q) => q.id === orderId);
@@ -50,54 +48,34 @@ export default function OrderDetailModal({
       }
       setCurrentOrder(order);
     }
-  }, [
-    orderId,
-    orders,
-    customers,
-    customerLoading,
-    fetchCustomers,
-    setCurrentOrder,
-  ]);
+  }, [orderId, orders, customers, customerLoading, fetchCustomers, setCurrentOrder]);
 
   const handleExportPDF = () => {
-    const pdf = new jsPDF();
+    if (!currentOrder) return;
 
-    const article = currentOrder ? currentOrder.article : 'Order';
+    const pdf = new jsPDF();
     const now = new Date();
     const timestamp = `${now.getFullYear()}${(now.getMonth() + 1)
-      .toString()
-      .padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}_${now
-      .getHours()
-      .toString()
-      .padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}`;
+      .toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}_${now
+      .getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}`;
 
-    const fileName = `${customerName}_${article}_${timestamp}.pdf`.replace(
-      /\s+/g,
-      '_'
-    );
+    const fileName = `${customerName}_${currentOrder.orderArticle || 'Order'}_${timestamp}.pdf`.replace(/\s+/g, '_');
 
-    // 页眉：公司信息和标题
+    const tableBody = displayFields
+      .filter((field) => field.value !== undefined && field.value !== null && field.value !== '')
+      .map((field) => [field.label, field.value || '-']);
+
     pdf.setFontSize(20);
     pdf.text('FUZHOU RUXING GIFTS CO., LIMITED', 14, 10);
     pdf.setFontSize(16);
     pdf.text('Order Details', 14, 20);
-
-    // 表格内容
-    const tableBody = displayFields
-      .filter(
-        (field) =>
-          field.value !== undefined &&
-          field.value !== null &&
-          field.value !== ''
-      )
-      .map((field) => [field.label, field.value || '-']);
 
     autoTable(pdf, {
       startY: 30,
       head: [['Field', 'Value']],
       body: tableBody,
       theme: 'striped',
-      headStyles: { fillColor: [33, 150, 243] }, // 蓝色表头
+      headStyles: { fillColor: [33, 150, 243] },
       styles: {
         fontSize: 10,
         cellPadding: 3,
@@ -108,15 +86,8 @@ export default function OrderDetailModal({
       },
     });
 
-    // 页脚：生成时间
     pdf.setFontSize(9);
-    pdf.text(
-      `Generated on: ${now.toLocaleString()}`,
-      14,
-      pdf.internal.pageSize.height - 10
-    );
-
-    // 导出
+    pdf.text(`Generated on: ${now.toLocaleString()}`, 14, pdf.internal.pageSize.height - 10);
     pdf.save(fileName);
   };
 
@@ -124,58 +95,53 @@ export default function OrderDetailModal({
     return <div className="text-gray-500">Loading...</div>;
   }
 
-  const displayFields = [
+  const displayFields: { label: string; value: unknown }[] = [
     {
-      label: 'Inquiry Date',
-      value: new Date(currentOrder.inquiryDate).toLocaleString(),
+      label: 'Order Date',
+      value: currentOrder.orderDate ? new Date(currentOrder.orderDate).toLocaleDateString() : '-',
+    },
+    {
+      label: 'Delivery Time',
+      value: currentOrder.deliveryTime ? new Date(currentOrder.deliveryTime).toLocaleDateString() : '-',
     },
     { label: 'Customer', value: customerName },
-    { label: 'Article', value: currentOrder.article },
-    { label: 'Client', value: currentOrder.client },
-    { label: 'Size', value: currentOrder.size },
-    { label: 'Material', value: currentOrder.material },
-    { label: 'Color', value: currentOrder.color },
-    { label: 'Branding', value: currentOrder.branding },
-    { label: 'Packing', value: currentOrder.packing },
-    { label: 'Quantity', value: currentOrder.quantity },
-    { label: 'Certifications', value: currentOrder.certifications },
-    { label: 'Details', value: currentOrder.details },
-    { label: 'Prices', value: formatQuotePrices(currentOrder.quotePrices) },
+    { label: 'Order No', value: currentOrder.orderNo },
+    { label: 'Customer Order No', value: currentOrder.customerOrderNo },
+    { label: 'Order Article', value: currentOrder.orderArticle },
+    { label: 'Currency', value: currentOrder.currency },
+    { label: 'Payment Terms', value: currentOrder.paymentTerms },
+    { label: 'Shipping Method', value: currentOrder.shippingMethod },
+    { label: 'Status', value: currentOrder.status },
+    { label: 'Remarks', value: currentOrder.remarks },
     {
-      label: 'Sample Time',
-      value: formatProductionTime(currentOrder.sampleTime),
-    },
-    { label: 'Mass Time', value: formatProductionTime(currentOrder.massTime) },
-    {
-      label: 'Fee',
-      value: formatAdditionalFee(currentOrder.additionalFees || []),
-    },
-    {
-      label: 'Packing',
-      value: formatPackingDetails(currentOrder.packingDetails || []),
+      label: 'Packing Details',
+      value: formatPackingDetails(currentOrder.packingDetails || [] as PackingDetail[]),
     },
   ];
 
   return (
     <GenericModal
-      isOpen // 使用传入的 isOpen 而不是直接传递 true
+      isOpen
       title="Order Details"
       onClose={onClose}
       ref={detailRef}
     >
-      {/* Detail content section */}
       <div className="text-sm text-gray-800 space-y-3">
         {displayFields
           .filter(
             (field) =>
               field.value !== undefined &&
               field.value !== null &&
-              field.value !== ''
+              field.value !== '',
           )
           .map((field) => (
             <div key={field.label} className="flex">
               <div className="w-40 font-semibold">{field.label}:</div>
-              <div className="flex-1 whitespace-pre-line">{field.value}</div>
+              <div className="flex-1 whitespace-pre-line">
+                {typeof field.value === 'string' || typeof field.value === 'number'
+                  ? field.value
+                  : JSON.stringify(field.value)}
+              </div>
             </div>
           ))}
       </div>

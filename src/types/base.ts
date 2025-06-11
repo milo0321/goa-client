@@ -9,10 +9,10 @@ export interface ResourceStore<T> {
     total: number;
   };
   initialized: boolean; // 确保类型定义包含该字段
-  fetchItems: (params?: any) => Promise<void>;
+  fetchItems: (params?: unknown) => Promise<void>;
   getItem: (id: string) => Promise<void>;
-  createItem: (data: any) => Promise<T>;
-  updateItem: (id: string, data: any) => Promise<T>;
+  createItem: (data: unknown) => Promise<T>;
+  updateItem: (id: string, data: unknown) => Promise<T>;
   deleteItem: (id: string) => Promise<void>;
   setCurrentItem: (item: T | null) => void;
   resetError: () => void;

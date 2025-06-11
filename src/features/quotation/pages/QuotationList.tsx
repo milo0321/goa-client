@@ -1,13 +1,14 @@
-import { useState, useEffect } from 'react';
-import { IconRefresh, IconPlus } from '@tabler/icons-react';
+import { useEffect, useState } from 'react';
+import { IconPlus, IconRefresh } from '@tabler/icons-react';
 import { Loader2 } from 'lucide-react';
 import { useQuotationStore } from '../store/quotation.store';
 import { QuotationTable } from './QuotationTable';
 import Pagination from '../../../components/Pagination';
 import QuotationCreateModal from '../modals/QuotationCreateModal';
 import QuotationEditModal from '../modals/QuotationEditModal';
-import QuotationQuoteModal from '../modals/QuotationQuoteModal'
+import QuotationQuoteModal from '../modals/QuotationQuoteModal';
 import QuotationDetailModal from '../modals/QuotationDetailModal';
+import { logger } from '@/utils/logger';
 
 export default function QuotationList() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -19,12 +20,16 @@ export default function QuotationList() {
   // 首次加载处理
   useEffect(() => {
     if (!initialized && !loading) {
-      fetchItems();
+      fetchItems().catch((err) => {
+        logger.error('Failed to fetch items:', err);
+      });
     }
   }, [initialized, loading, fetchItems]);
 
   const handlePageChange = (page: number) => {
-    fetchItems({ page, limit: pagination.limit });
+    fetchItems({ page, limit: pagination.limit }).catch((err) => {
+      logger.error('Failed to change page:', err);
+    });
   };
 
   const handleRefresh = () => {
@@ -32,6 +37,8 @@ export default function QuotationList() {
       page: pagination.page,
       limit: pagination.limit,
       force: true,
+    }).catch((err) => {
+      logger.error('Failed to refresh data:', err);
     });
   };
 

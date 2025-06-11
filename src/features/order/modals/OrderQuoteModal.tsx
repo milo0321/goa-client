@@ -1,19 +1,15 @@
 import { useEffect, useState } from 'react';
 import { notification } from 'antd';
-import {
-  QuotePrice,
-  AdditionalFee,
-  PackingDetail,
-  ProductionTime,
-} from '../order.types';
+import { AdditionalFee, PackingDetail, ProductionTime, QuotePrice } from '../order.types';
 import { useCustomerStore } from '../../customer/store/customer.store';
 import { useOrderStore } from '../order.store';
-import { GenericForm } from '../../../components/GenericForm';
-import { GenericModal } from '../../../components/GenericModal';
+import { GenericForm } from '@/components/GenericForm';
+import { GenericModal } from '@/components/GenericModal';
 import { QuotePrices } from '../components/QuotePrices';
 import { AdditionalFees } from '../components/AdditionalFees';
 import { PackingMethodInput } from '../components/PackingMethodInput';
 import { ProductionTimeInput } from '../components/ProductionTimeInput';
+import { logger } from '@/utils/logger'; // ✅ Make sure you have a logger utility
 
 interface OrderQuoteModalProps {
   orderId: string;
@@ -22,10 +18,10 @@ interface OrderQuoteModalProps {
 }
 
 export default function OrderQuoteModal({
-  orderId,
-  onClose,
-  onSubmitSuccess,
-}: OrderQuoteModalProps) {
+                                          orderId,
+                                          onClose,
+                                          onSubmitSuccess,
+                                        }: OrderQuoteModalProps) {
   const {
     currentItem: currentOrder,
     items: orders,
@@ -58,7 +54,9 @@ export default function OrderQuoteModal({
 
   useEffect(() => {
     if (!customers.length && !customerLoading) {
-      fetchCustomers();
+      fetchCustomers().catch((err) => {
+        logger.error('Failed to fetch customers:', err);
+      });
     }
 
     const order = orders.find((q) => q.id === orderId);
@@ -70,11 +68,6 @@ export default function OrderQuoteModal({
         }
       }
       setCurrentOrder(order);
-      // setQuotePrices(order.quotePrices || []);
-      // setAdditionalFees(order.additionalFees || []);
-      // setPackingDetails(order.packingDetails || []);
-      // setSampleTime(order.sampleTime);
-      // setMassTime(order.massTime);
     }
   }, [
     orderId,
@@ -93,7 +86,7 @@ export default function OrderQuoteModal({
     notes?: string;
   }) => {
     try {
-      const merged = { ...currentOrder }; // 克隆 currentOrder 为主
+      const merged = { ...currentOrder };
       Object.entries(baseData).forEach(([key, value]) => {
         if (value !== undefined && value !== null) {
           (merged as any)[key] = value;
@@ -102,13 +95,14 @@ export default function OrderQuoteModal({
 
       await updateItem(orderId, {
         ...merged,
-        status: 'quoted', // 强制标记为 quoted
-        quotePrices: quotePrices,
-        additionalFees: additionalFees,
-        packingDetails: packingDetails,
-        sampleTime: sampleTime,
-        massTime: massTime,
+        status: 'quoted',
+        quotePrices,
+        additionalFees,
+        packingDetails,
+        sampleTime,
+        massTime,
       });
+
       notification.success({ message: 'Order submitted successfully!' });
       onSubmitSuccess?.();
       onClose();
@@ -150,8 +144,12 @@ export default function OrderQuoteModal({
       label: 'Notes',
       type: 'textarea' as const,
       attrs: {
-        rows: 10, // 控制初始高度
-        style: { resize: 'vertical', minHeight: '80px', overflow: 'hidden' },
+        rows: 10,
+        style: {
+          resize: 'vertical',
+          minHeight: '80px',
+          overflow: 'hidden',
+        },
         onInput: (e: React.ChangeEvent<HTMLTextAreaElement>) => {
           e.target.style.height = 'auto';
           e.target.style.height = `${e.target.scrollHeight}px`;
@@ -169,7 +167,7 @@ export default function OrderQuoteModal({
               (field) =>
                 field.value !== undefined &&
                 field.value !== null &&
-                field.value !== ''
+                field.value !== '',
             )
             .map((field) => (
               <div key={field.label} className="flex">
@@ -178,6 +176,7 @@ export default function OrderQuoteModal({
               </div>
             ))}
         </div>
+
         <GenericForm
           initialData={currentOrder}
           fields={baseFields}
@@ -189,7 +188,6 @@ export default function OrderQuoteModal({
             value={sampleTime}
             onChange={setSampleTime}
           />
-
           <ProductionTimeInput
             label="Mass Time"
             value={massTime}

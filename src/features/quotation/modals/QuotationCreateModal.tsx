@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { useCustomerStore } from '../../customer/store/customer.store';
 import { useQuotationStore } from '../store/quotation.store';
-import { GenericModal } from '../../../components/GenericModal';
-import { GenericForm } from '../../../components/GenericForm';
-import { notification, Button, Input } from 'antd';
+import { GenericModal } from '@/components/GenericModal';
+import { GenericForm } from '@/components/GenericForm';
+import { Button, Input, notification } from 'antd';
 import dayjs from 'dayjs';
+import { logger } from '@/utils/logger';
 
 interface QuotationCreateModalProps {
   isOpen: boolean;
@@ -13,10 +14,10 @@ interface QuotationCreateModalProps {
 }
 
 export default function QuotationCreateModal({
-  isOpen,
-  onClose,
-  onSubmitSuccess,
-}: QuotationCreateModalProps) {
+                                               isOpen,
+                                               onClose,
+                                               onSubmitSuccess,
+                                             }: QuotationCreateModalProps) {
   const {
     items: customers,
     loading: customerLoading,
@@ -53,7 +54,7 @@ export default function QuotationCreateModal({
       onSubmitSuccess?.(); // 如果成功，调用成功回调
       onClose(); // 然后关闭模态框
     } catch (error) {
-      console.error('Create quotation failed:', error);
+      logger.error('Create quotation failed:', error);
       notification.error({
         message: 'Submission Failed',
         description: error instanceof Error ? error.message : String(error),
@@ -63,16 +64,18 @@ export default function QuotationCreateModal({
 
   // 确保加载客户列表
   useEffect(() => {
-    console.log('Checking customer load conditions:', {
+    logger.info('Checking customer load conditions:', {
       length: customers.length,
       loading: customerLoading,
       initialized: customerInitialized,
     });
 
     if (!customers.length && !customerLoading && !customerInitialized) {
-      fetchCustomers(); // 初始化加载客户
+      fetchCustomers().catch((err) => {
+        logger.error('Failed to fetch Customers', err);
+      }); // 初始化加载客户
     }
-  }, [customers.length, customerLoading, customerInitialized, fetchCustomers]);
+  }, [customers, customerLoading, customerInitialized, fetchCustomers]);
 
   // 点击解析
   const handleParseText = () => {

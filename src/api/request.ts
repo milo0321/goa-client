@@ -4,7 +4,7 @@ import { PaginatedResponse } from '@/types/base';
 // 通用 GET 列表（分页）
 export const fetchEntities = async <T>(
   endpoint: string,
-  params?: Record<string, any>
+  params?: unknown,
 ): Promise<PaginatedResponse<T>> => {
   return await apiClient.get(endpoint, { params });
 };

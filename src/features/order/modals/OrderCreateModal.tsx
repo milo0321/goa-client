@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
+import { Button, notification } from 'antd';
+import dayjs from 'dayjs';
 import { useCustomerStore } from '../../customer/store/customer.store';
 import { useOrderStore } from '../order.store';
-import { GenericModal } from '../../../components/GenericModal';
-import { GenericForm } from '../../../components/GenericForm';
-import { notification, Button, Input } from 'antd';
-import dayjs from 'dayjs';
+import { GenericModal } from '@/components/GenericModal';
+import { GenericForm } from '@/components/GenericForm';
+import { CreateOrder } from '../order.types';
+import { logger } from '@/utils/logger';
 
 interface OrderCreateModalProps {
   isOpen: boolean;
@@ -13,42 +15,38 @@ interface OrderCreateModalProps {
 }
 
 export default function OrderCreateModal({
-  isOpen,
-  onClose,
-  onSubmitSuccess,
-}: OrderCreateModalProps) {
+                                           isOpen,
+                                           onClose,
+                                           onSubmitSuccess,
+                                         }: OrderCreateModalProps) {
   const { items: customers, loading: customerLoading, fetchItems: fetchCustomers } = useCustomerStore();
   const { createItem } = useOrderStore();
-  const formRef = useRef(null);
-  const [rawText, setRawText] = useState('');
-  const initialFormData = {
-    inquiryDate: dayjs(), // 设置当前时间
-  };
+  const formRef = useRef<unknown>(null);
+  const [uploading, setUploading] = useState(false);
 
-  // 提交处理
-  const handleSubmit = async (baseData: {
-    customerId: string;
-    article: string;
-    client: string,
-    size: string,
-    material: string,
-    color: string,
-    branding: string,
-    packing: string,
-    quantity: string,
-    certifications: string,
-    details: string,
-    inquiryDate: string;
-    status: 'draft' | 'quoted' | 'ordered' | 'canceled';
-  }) => {
-    try {
-      await createItem({
-        ...baseData
+  useEffect(() => {
+    if (!customers.length && !customerLoading) {
+      fetchCustomers().catch((err) => {
+        logger.error('Failed to fetch customers:', err);
       });
-      onSubmitSuccess?.(); // 如果成功，调用成功回调
-      onClose(); // 然后关闭模态框
+    }
+  }, [customers, customerLoading, fetchCustomers]);
+
+  const handleSubmit = async (baseData: CreateOrder) => {
+    try {
+      const payload: CreateOrder = {
+        ...baseData,
+        orderDate: dayjs(baseData.orderDate).toISOString(),
+        deliveryTime: dayjs(baseData.deliveryTime).toISOString(),
+        orderItems: baseData.orderItems || [], // 确保存在
+        costItems: baseData.costItems || [],
+      };
+
+      await createItem(payload);
+      onSubmitSuccess?.();
+      onClose();
     } catch (error) {
-      console.error('Create order failed:', error);
+      logger.error('Create order failed:', error);
       notification.error({
         message: 'Submission Failed',
         description: error instanceof Error ? error.message : String(error),
@@ -56,95 +54,152 @@ export default function OrderCreateModal({
     }
   };
 
-  // 确保加载客户列表
-  useEffect(() => {
-    if (!customers.length && !customerLoading) {
-      fetchCustomers(); // 初始化加载客户
-    }
-  }, [customers, customerLoading, fetchCustomers]);
+  const handleUpload: UploadProps['customRequest'] = async ({ file, onSuccess, onError }) => {
+    try {
+      setUploading(true);
+      const arrayBuffer = await file.arrayBuffer();
+      const pdfData = await pdfParse(Buffer.from(arrayBuffer));
+      const parsed = parsePdfTextToOrder(pdfData.text);
 
-  // 点击解析
-  const handleParseText = () => {
-    if (!rawText.trim()) {
-      notification.warning({ message: 'No input to parse.' });
-      return;
+      formRef.current?.setFieldsValue(parsed);
+      notification.success({ message: 'PDF parsed and form filled.' });
+      onSuccess?.(null, new XMLHttpRequest());
+    } catch (err) {
+      console.error('PDF parsing error:', err);
+      notification.error({ message: 'Failed to parse PDF' });
+      onError?.(err as Error);
+    } finally {
+      setUploading(false);
     }
-
-    const parsed = parseClipboardText(rawText);
-    formRef.current?.setFieldsValue(parsed);
-    notification.success({
-      message: 'Parsed Successfully',
-      description: 'Fields have been populated from the input.',
-    });
   };
 
-  // 正则解析文本
-  const parseClipboardText = (text: string) => {
-    const result: Record<string, string> = {};
+  const parsePdfTextToOrder = (
+    text: string,
+  ): Partial<CreateOrder> => {
+    const lines = text.split('\n').map((line) => line.trim()).filter(Boolean);
+    const findLine = (keyword: string) =>
+      lines.find((l) => l.toLowerCase().includes(keyword.toLowerCase())) ?? '';
 
-    const patterns: Record<string, RegExp[]> = {
-      article: [/Article:\s*(.+)/i],
-      color: [/Color:\s*(.+)/i, /Colour:\s*(.+)/i],
-      branding: [/Print:\s*(.+)/i, /Branding:\s*(.+)/i],
-      size: [/Size:\s*(.+)/i],
-      material: [/Material:\s*(.+)/i],
-      packing: [/Packing:\s*(.+)/i],
-      quantity: [/Quantity:\s*(.+)/i],
-    };
+    const orderNoLine = findLine('order');
+    const orderNoMatch = orderNoLine.match(/(\d{4}-\d{6})/);
 
+    const deliveryLine = findLine('Please deliver by');
+    const orderDateLine = findLine('Date of order');
+    const articleLine = findLine('Artikel:');
+    const article = articleLine?.split(':')[1]?.trim();
 
-    for (const [key, regexList] of Object.entries(patterns)) {
-      for (const regex of regexList) {
-        const match = text.match(regex);
-        if (match) {
-          result[key] = match[1].trim();
-          break; // 成功匹配一个就跳过剩下的
-        }
+    // 提取 orderItems 区块
+    const orderItems: CreateOrderItem[] = [];
+    const posIndex = lines.findIndex(
+      (line) => line.includes('Pos') && line.includes('Item no'),
+    );
+
+    if (posIndex >= 0) {
+      for (let i = posIndex + 1; i < lines.length; i++) {
+        const line = lines[i];
+
+        // 假设格式："1 80502 Velvet Bag 10x15cm 1000 pcs 0.50 500.00"
+        const parts = line.split(/\s{2,}/).filter(Boolean);
+        if (parts.length < 6) continue;
+
+        const [itemNo, ...rest] = parts;
+        const qtyIndex = rest.findIndex((v) => /^\d+$/.test(v));
+        if (qtyIndex < 0 || !rest[qtyIndex + 1]) continue;
+
+        const articleText = rest.slice(0, qtyIndex).join(' ');
+        const quantity = parseInt(rest[qtyIndex], 10);
+        const unit = rest[qtyIndex + 1];
+        const unitPrice = parseFloat(rest[qtyIndex + 2] || '0');
+
+        orderItems.push({
+          itemNo: itemNo,
+          article: articleText,
+          quantity,
+          unit,
+          unitPrice,
+          vatRate: 0,
+        });
       }
     }
 
-    return result;
+    // 提取 tooling 成本（示例静态）
+    const costItems: CreateCostItem[] = [
+      {
+        componentName: 'Werkzeugkosten / moulding charge',
+        componentType: 'Molding',
+        quantity: 1,
+        unit: 'pcs',
+        unitCost: 150,
+        remarks: 'Tooling',
+      },
+    ];
+
+    return {
+      orderNo: orderNoMatch?.[1] ?? '',
+      orderArticle: article ?? '',
+      currency: 'USD',
+      paymentTerms: '',
+      deliveryTime: deliveryLine
+        ? new Date(deliveryLine.split(':').pop()!.trim()).toISOString()
+        : '',
+      shippingMethod: '',
+      orderDate: orderDateLine
+        ? new Date(orderDateLine.split(':').pop()!.trim()).toISOString()
+        : dayjs().toISOString(),
+      remarks: 'Generated from PDF',
+      status: 'draft',
+      orderItems,
+      costItems,
+    };
   };
 
-  // 基础表单字段
   const baseFields = [
-    { name: 'customerId', label: 'Customer', type: 'select' as const, options: customers.map(c => ({ value: c.id, label: c.name })), required: true },
-    { name: 'inquiryDate', label: 'Inquiry Date', type: 'date' as const, required: true },
-    { name: 'article', label: 'Article', type: 'text' as const, required: true },
-    { name: 'client', label: 'Client', type: 'text' as const, required: false },
-    { name: 'size', label: 'Size', type: 'text' as const, required: false },
-    { name: 'material', label: 'Material', type: 'text' as const, required: false },
-    { name: 'color', label: 'Color', type: 'text' as const, required: false },
-    { name: 'branding', label: 'Branding', type: 'text' as const, required: false },
-    { name: 'packing', label: 'Packing', type: 'text' as const, required: false },
-    { name: 'quantity', label: 'Quantity', type: 'text' as const, required: false },
-    { name: 'certifications', label: 'Certifications', type: 'text' as const, required: false },
-    { name: 'details', label: 'Details', type: 'textarea' as const }
+    { name: 'orderNo', label: 'Order No.', type: 'text' as const, required: true },
+    { name: 'orderArticle', label: 'Order Article', type: 'text' as const, required: true },
+    {
+      name: 'customerId',
+      label: 'Customer',
+      type: 'select' as const,
+      options: Array.isArray(customers)
+        ? customers.map((c) => ({ value: c.id, label: c.name }))
+        : [],
+      required: true,
+      attrs: {
+        disabled: customerLoading,
+      },
+    },
+    { name: 'customerOrderNo', label: 'Customer Order No.', type: 'text' as const },
+    { name: 'customerName', label: 'Customer Name', type: 'text' as const },
+    { name: 'currency', label: 'Currency', type: 'text' as const, required: true },
+    { name: 'paymentTerms', label: 'Payment Terms', type: 'text' as const, required: true },
+    { name: 'deliveryTime', label: 'Delivery Time', type: 'date' as const, required: true },
+    { name: 'shippingMethod', label: 'Shipping Method', type: 'text' as const },
+    { name: 'orderDate', label: 'Order Date', type: 'date' as const, required: true },
+    { name: 'remarks', label: 'Remarks', type: 'textarea' as const },
+    // 这里暂不处理 packingDetails、orderItems、costItems 的表单字段，可以后续补充
   ];
 
   return (
-    <GenericModal isOpen={isOpen} title="Add Order" onClose={onClose}>
+    <GenericModal isOpen={isOpen} title="Create Order" onClose={onClose}>
       <div className="max-h-[80vh] overflow-y-auto space-y-6">
-        {/* 输入原始文本并解析 */}
-        <div className="flex flex-col space-y-2">
-          <label className="font-semibold">Paste Raw Text Here:</label>
-          <Input.TextArea
-            rows={6}
-            value={rawText}
-            onChange={(e) => setRawText(e.target.value)}
-            placeholder={`Paste order content, e.g.:\nArticle: ABC123\nColor: Red\nSize: 30x40cm`}
-          />
-          <div className="flex justify-end">
-            <Button type="primary" onClick={handleParseText}>
-              Parse to Fields
+        {/* 上传PDF区域 */}
+        <div className="space-y-2">
+          <label className="font-semibold">Upload Order PDF:</label>
+          <Upload
+            accept=".pdf"
+            showUploadList={false}
+            customRequest={handleUpload}
+          >
+            <Button icon={<UploadOutlined />} loading={uploading}>
+              Upload PDF to Auto-fill
             </Button>
-          </div>
+          </Upload>
         </div>
 
         {/* 表单区域 */}
         <GenericForm
           formRef={formRef}
-          initialData={initialFormData}
+          initialData={{ orderDate: dayjs().toISOString() }}
           fields={baseFields}
           onSubmit={handleSubmit}
           submitText="Create Order"

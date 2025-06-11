@@ -1,25 +1,28 @@
 import { create } from 'zustand';
 import * as api from './order.api';
-import { createResourceStore } from '../../lib/createResourceStore';
+import { createResourceStore } from '@/lib/createResourceStore';
 import {
   Order,
   CreateOrder,
   UpdateOrder,
-  QuotePrice,
-  AdditionalFee
+  OrderItem,
+  CostItem
 } from './order.types';
-import { ResourceStore } from '../../types/base';
+import { ResourceStore } from '@/types/base';
 import { StateCreator } from 'zustand/vanilla';
 
 type OrderStore = ResourceStore<Order> & {
-  submitOrder: (id: string, priceData: {
-    quotePrices: QuotePrice[];
-    additionalFees?: AdditionalFee[];
-  }) => Promise<void>;
-  calculatePrice: (params: {
-    quantity: number;
-    shippingMethod: 'air' | 'ship';
-  }) => Promise<number>;
+  orderItems: OrderItem[];
+  costItems: CostItem[];
+  setOrderItems: (items: OrderItem[]) => void;
+  addOrderItem: (item: OrderItem) => void;
+  updateOrderItem: (index: number, item: Partial<OrderItem>) => void;
+  removeOrderItem: (index: number) => void;
+
+  setCostItems: (items: CostItem[]) => void;
+  addCostItem: (item: CostItem) => void;
+  updateCostItem: (index: number, item: Partial<CostItem>) => void;
+  removeCostItem: (index: number) => void;
 };
 
 const orderStoreCreator: StateCreator<
@@ -39,46 +42,38 @@ const orderStoreCreator: StateCreator<
   return {
     ...baseStore,
 
-    // 提交报价（带多阶梯价格）
-    submitOrder: async (id, { quotePrices, additionalFees }) => {
-      set({ loading: true, error: null });
-      try {
-        const updated = await api.submitOrder(id, {
-          quotePrices,
-          additionalFees,
-        });
-        set({
-          items: get().items.map(q => q.id === id ? updated : q),
-          currentItem: updated,
-          loading: false
-        });
-      } catch (err) {
-        set({
-          error: err instanceof Error ? err.message : 'Submission failed',
-          loading: false
-        });
-        throw err;
-      }
-    },
+    orderItems: [],
+    costItems: [],
 
-    // quoteInquiry: async (id: string, quoteData: QuoteFormData) => {
-    //   try {
-    //     set({ loading: true });
-    //     await api.patch(`/orders/${id}/quote`, quoteData);
-    //     notification.success({ message: 'Quote submitted successfully' });
-    //   } catch (error) {
-    //     notification.error({ message: 'Quote submission failed' });
-    //     throw error;
-    //   } finally {
-    //     set({ loading: false });
-    //   }
-    // },
+    setOrderItems: (items) => set({ orderItems: items }),
+    addOrderItem: (item) => set((state) => ({ orderItems: [...state.orderItems, item] })),
+    updateOrderItem: (index, updatedFields) =>
+      set((state) => {
+        const updated = [...state.orderItems];
+        updated[index] = { ...updated[index], ...updatedFields };
+        return { orderItems: updated };
+      }),
+    removeOrderItem: (index) =>
+      set((state) => {
+        const updated = [...state.orderItems];
+        updated.splice(index, 1);
+        return { orderItems: updated };
+      }),
 
-    // 价格计算逻辑
-    calculatePrice: async ({ quantity, shippingMethod }) => {
-      const res = await api.calculatePrice({ quantity, shippingMethod });
-      return res.price;
-    }
+    setCostItems: (items) => set({ costItems: items }),
+    addCostItem: (item) => set((state) => ({ costItems: [...state.costItems, item] })),
+    updateCostItem: (index, updatedFields) =>
+      set((state) => {
+        const updated = [...state.costItems];
+        updated[index] = { ...updated[index], ...updatedFields };
+        return { costItems: updated };
+      }),
+    removeCostItem: (index) =>
+      set((state) => {
+        const updated = [...state.costItems];
+        updated.splice(index, 1);
+        return { costItems: updated };
+      }),
   };
 };
 
