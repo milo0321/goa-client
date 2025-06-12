@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import * as api from '../api/quotation.api';
-import { createResourceStore } from '../../../lib/createResourceStore';
+import { createResourceStore } from '../../../utils/createResourceStore';
 import {
   Quotation,
   CreateQuotation,

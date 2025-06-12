@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
-import { IconRefresh, IconPlus } from '@tabler/icons-react';
+import { useEffect, useState } from 'react';
+import { IconPlus, IconRefresh } from '@tabler/icons-react';
 import { Loader2 } from 'lucide-react';
+import { logger } from '@/utils/logger';
+import Pagination from '@/components/Pagination';
 import { useCustomerStore } from '../store/customer.store';
 import { CustomerTable } from './CustomerTable';
-import Pagination from '../../../components/Pagination';
 import { CustomerCreateModal } from '../modals/CustomerCreateModal';
 import CustomerEditModal from '../modals/CustomerEditModal';
 
@@ -15,12 +16,16 @@ export default function CustomerList() {
   // 首次加载处理
   useEffect(() => {
     if (!initialized && !loading) {
-      fetchItems();
+      fetchItems.catch((err) => {
+        logger.error('Failed to load customers', err);
+      });
     }
   }, [initialized, loading, fetchItems]);
 
   const handlePageChange = (page: number) => {
-    fetchItems({ page, limit: pagination.limit });
+    fetchItems({ page, limit: pagination.limit }).catch((err) => {
+      logger.error('Failed to change customers', err);
+    });
   };
 
   const handleRefresh = () => {
@@ -28,6 +33,8 @@ export default function CustomerList() {
       page: pagination.page,
       limit: pagination.limit,
       force: true,
+    }).catch((err) => {
+      logger.error('Failed to refresh customers', err);
     });
   };
 

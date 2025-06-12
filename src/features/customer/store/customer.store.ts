@@ -1,9 +1,9 @@
 import { create } from 'zustand';
-import * as api from '../api/customer.api';
-import { createResourceStore } from '../../../lib/createResourceStore';
-import { Customer, CreateCustomer, UpdateCustomer } from '../types/customer.types';
-import { ResourceStore } from '../../../types/base';
 import { StateCreator } from 'zustand/vanilla';
+import { ResourceStore } from '@/types/base';
+import { createResourceStore } from '@/utils/createResourceStore';
+import { CreateCustomer, Customer, UpdateCustomer } from '../types/customer.types';
+import * as api from '../api/customer.api';
 
 // 定义扩展的CustomerStore类型
 type CustomerStore = ResourceStore<Customer> & {
@@ -25,7 +25,7 @@ const customerStoreCreator: StateCreator<
       fetchOne: api.getCustomer,
       create: api.createCustomer,
       update: api.updateCustomer,
-      delete: api.deleteCustomer
+      delete: api.deleteCustomer,
     })(set, get, apiStore),
   };
 };

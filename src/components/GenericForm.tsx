@@ -1,15 +1,15 @@
 import React, { useEffect } from 'react';
-import { Form, Input, Select, DatePicker, Button, InputNumber, Checkbox, Space } from 'antd';
+import { Button, Checkbox, DatePicker, Form, Input, InputNumber, Select, Space } from 'antd';
 import { FormInstance } from 'antd/es/form';
-import { Field } from '../types/ui';
-import { setFieldsValueWithTypeConversion } from '../utils/date';
+import { Field } from '@/types/ui';
+import { transformFormDataByFieldTypes } from '@/utils/date';
 
 interface GenericFormProps {
   fields: Field[];
-  onSubmit: (values: any) => void;
+  onSubmit: (values: unknown) => void;
   submitText?: string;
   formRef?: React.RefObject<FormInstance>;
-  initialData?: any;  // Initial values for the form
+  initialData?: unknown;  // Initial values for the form
   children?: React.ReactNode;
 }
 
@@ -19,14 +19,14 @@ export const GenericForm: React.FC<GenericFormProps> = ({
   submitText = 'Submit',
   formRef,
   initialData,
-  children
+  children,
 }) => {
   const [form] = Form.useForm(); // 创建本地form实例
 
   // 绑定外部ref,支持黏贴的时候的数据传入
   useEffect(() => {
     if (formRef && formRef.current !== form) {
-      (formRef as any).current = form;
+      formRef.current = form;
     }
   }, [formRef, form]);
 
@@ -34,20 +34,14 @@ export const GenericForm: React.FC<GenericFormProps> = ({
   useEffect(() => {
     if (initialData) {
       const instance = formRef?.current || form;
-      setFieldsValueWithTypeConversion(instance, fields, initialData);
+      const fieldsData = transformFormDataByFieldTypes(fields, initialData);
+      instance.setFieldsValue(fieldsData);
     }
   }, [initialData, formRef, form, fields]);
 
-  const handleFinish = (values: any) => {
-    const convertedValues: Record<string, any> = { ...values };
-
-    fields.forEach(field => {
-      if (field.type === 'date' && values[field.name]) {
-        convertedValues[field.name] = values[field.name].valueOf(); // 转换成时间戳
-      }
-    });
-
-    onSubmit(convertedValues);
+  const handleFinish = (values: unknown) => {
+    const fieldsData = transformFormDataByFieldTypes(fields, values);
+    onSubmit(fieldsData);
   };
 
   return (
@@ -57,7 +51,7 @@ export const GenericForm: React.FC<GenericFormProps> = ({
       layout="vertical"
     >
       {fields.map((field) => {
-        let fieldElement;
+        let fieldElement = null;
 
         switch (field.type) {
           case 'text':

@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import * as api from './supplier.api';
-import { createResourceStore } from '../../lib/createResourceStore';
+import { createResourceStore } from '../../utils/createResourceStore';
 import { Supplier, CreateSupplier, UpdateSupplier } from './supplier.types';
 import { ResourceStore } from '../../types/base';
 import { StateCreator } from 'zustand/vanilla';

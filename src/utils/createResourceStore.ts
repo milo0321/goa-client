@@ -1,9 +1,9 @@
 import { StateCreator } from 'zustand';
 import { ResourceStore, BaseEntity, PaginatedResponse } from '../types/base';
 
-export function createResourceStore<T extends BaseEntity, CreateT, UpdateT>(
+export function createResourceStore<T extends BaseEntity, CreateT, UpdateT, ParamsT = unknown>(
   api: {
-    fetchAll: (params?: any) => Promise<PaginatedResponse<T>>;
+    fetchAll: (params?: ParamsT) => Promise<PaginatedResponse<T>>;
     fetchOne: (id: string) => Promise<T>;
     create: (data: CreateT) => Promise<T>;
     update: (id: string, data: UpdateT) => Promise<T>;
@@ -24,8 +24,8 @@ export function createResourceStore<T extends BaseEntity, CreateT, UpdateT>(
     pagination: { ...defaultPagination, total: 0 },
     initialized: false,
 
-    fetchItems: async (params) => {
-      if (params?.force) {
+    fetchItems: async (params?: ParamsT) => {
+      if (typeof params === 'object' && params && 'force' in params) {
         set({ initialized: false }); // 重置状态强制刷新
       }
       set({ loading: true, error: null });

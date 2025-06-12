@@ -1,14 +1,18 @@
 import { useEffect, useRef, useState } from 'react';
 import { Button, notification, Upload, UploadProps } from 'antd';
+import type { FormInstance } from 'antd/es/form';
 import dayjs from 'dayjs';
-import { useCustomerStore } from '../../customer/store/customer.store';
+import { useCustomerStore } from '@/features/customer/store/customer.store';
 import { useOrderStore } from '../order.store';
 import { GenericModal } from '@/components/GenericModal';
 import { GenericForm } from '@/components/GenericForm';
-import { CreateOrder } from '../order.types';
+import { CreateCostItem, CreateOrder, CreateOrderItem } from '../order.types';
 import { logger } from '@/utils/logger';
+import { parsePdfText } from '@/utils/pdf';
 import { UploadOutlined } from '@ant-design/icons';
 import { UploadRequestOption } from 'rc-upload/lib/interface';
+import { OrderItemEditor } from '@/features/order/components/OrderItemEditor';
+import { CostItemEditor } from '@/features/order/components/CostItemEditor';
 
 interface OrderCreateModalProps {
   isOpen: boolean;
@@ -19,24 +23,28 @@ interface OrderCreateModalProps {
 export default function OrderCreateModal({
   isOpen,
   onClose,
-  onSubmitSuccess
+  onSubmitSuccess,
 }: OrderCreateModalProps) {
   const {
     items: customers,
     loading: customerLoading,
-    fetchItems: fetchCustomers
+    initialized: customerInitialized,
+    fetchItems: fetchCustomers,
   } = useCustomerStore();
   const { createItem } = useOrderStore();
-  const formRef = useRef<unknown>(null);
+
+  const formRef = useRef<FormInstance>(null);
   const [uploading, setUploading] = useState(false);
+  const [orderItems, setOrderItems] = useState<CreateOrderItem[]>([]);
+  const [costItems, setCostItems] = useState<CreateCostItem[]>([]);
 
   useEffect(() => {
-    if (!customers.length && !customerLoading) {
+    if (!customerInitialized && !customerLoading) {
       fetchCustomers().catch(err => {
         logger.error('Failed to fetch customers:', err);
       });
     }
-  }, [customers, customerLoading, fetchCustomers]);
+  }, [customers, customerLoading, customerInitialized, fetchCustomers]);
 
   const handleSubmit = async (baseData: CreateOrder) => {
     try {
@@ -45,17 +53,22 @@ export default function OrderCreateModal({
         orderDate: dayjs(baseData.orderDate).toISOString(),
         deliveryTime: dayjs(baseData.deliveryTime).toISOString(),
         orderItems: baseData.orderItems || [], // 确保存在
-        costItems: baseData.costItems || []
+        costItems: baseData.costItems || [],
       };
 
-      await createItem(payload);
+      await createItem({
+        ...payload,
+        orderItems,
+        costItems,
+      });
+      notification.success({ message: 'Order created successfully!' });
       onSubmitSuccess?.();
       onClose();
     } catch (error) {
       logger.error('Create order failed:', error);
       notification.error({
         message: 'Submission Failed',
-        description: error instanceof Error ? error.message : String(error)
+        description: error instanceof Error ? error.message : String(error),
       });
     }
   };
@@ -73,28 +86,35 @@ export default function OrderCreateModal({
         throw new Error('Only PDF files are supported.');
       }
 
-      const arrayBuffer = await file.arrayBuffer();
-      const pdfData = await pdfParse(new Uint8Array(arrayBuffer));
+      setUploading(true);
+      const text = await parsePdfText(file);
 
-      // 假设你有当前客户列表
-      const customers = await getCustomersForParsing(); // 可从 store 或 props 注入
-      const parsedOrder = parsePdfTextToOrder(pdfData.text, customers);
+      // const customers = await getCustomersForParsing(); // 可从 store 或 props 注入
+      const parsed = parsePdfTextToOrder(text);
 
       // 填充表单（你需要暴露 formRef 或 setFormData）
-      if (formRef.current) {
-        formRef.current.setFieldsValue(parsedOrder);
+      if (formRef.current && parsed.formData) {
+        formRef.current.setFieldsValue(parsed.formData);
+        setOrderItems(parsed.orderItems);
       }
 
-      logger.info('PDF parsed successfully', parsedOrder);
+      logger.info('PDF parsed successfully', parsed);
       onSuccess?.({}, new XMLHttpRequest());
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to parse PDF file';
       logger.error(message, err);
       onError?.(new Error(message));
+    } finally {
+      setUploading(false);
     }
   };
 
-  const parsePdfTextToOrder = (text: string): Partial<CreateOrder> => {
+  const parsePdfTextToOrder = (
+    text: string,
+  ): {
+    formData: Partial<CreateOrder>;
+    orderItems: CreateOrderItem[];
+  } => {
     const lines = text
       .split('\n')
       .map(line => line.trim())
@@ -111,7 +131,7 @@ export default function OrderCreateModal({
     const article = articleLine?.split(':')[1]?.trim();
 
     // 提取 orderItems 区块
-    const orderItems: CreateOrderItem[] = [];
+    const parsedOrderItems: CreateOrderItem[] = [];
     const posIndex = lines.findIndex(line => line.includes('Pos') && line.includes('Item no'));
 
     if (posIndex >= 0) {
@@ -131,45 +151,33 @@ export default function OrderCreateModal({
         const unit = rest[qtyIndex + 1];
         const unitPrice = parseFloat(rest[qtyIndex + 2] || '0');
 
-        orderItems.push({
+        parsedOrderItems.push({
           itemNo: itemNo,
           article: articleText,
           quantity,
           unit,
           unitPrice,
-          vatRate: 0
+          vatRate: 0,
         });
       }
     }
-
-    // 提取 tooling 成本（示例静态）
-    const costItems: CreateCostItem[] = [
-      {
-        componentName: 'Werkzeugkosten / moulding charge',
-        componentType: 'Molding',
-        quantity: 1,
-        unit: 'pcs',
-        unitCost: 150,
-        remarks: 'Tooling'
-      }
-    ];
-
     return {
-      orderNo: orderNoMatch?.[1] ?? '',
-      orderArticle: article ?? '',
-      currency: 'USD',
-      paymentTerms: '',
-      deliveryTime: deliveryLine
-        ? new Date(deliveryLine.split(':').pop()!.trim()).toISOString()
-        : '',
-      shippingMethod: '',
-      orderDate: orderDateLine
-        ? new Date(orderDateLine.split(':').pop()!.trim()).toISOString()
-        : dayjs().toISOString(),
-      remarks: 'Generated from PDF',
-      status: 'draft',
-      orderItems,
-      costItems
+      formData: {
+        orderNo: orderNoMatch?.[1] ?? '',
+        orderArticle: article ?? '',
+        currency: 'USD',
+        paymentTerms: '',
+        deliveryTime: deliveryLine
+          ? new Date(deliveryLine.split(':').pop()!.trim()).toISOString()
+          : '',
+        shippingMethod: '',
+        orderDate: orderDateLine
+          ? new Date(orderDateLine.split(':').pop()!.trim()).toISOString()
+          : dayjs().toISOString(),
+        remarks: 'Generated from PDF',
+        status: 'draft',
+      },
+      orderItems: parsedOrderItems,
     };
   };
 
@@ -183,8 +191,8 @@ export default function OrderCreateModal({
       options: Array.isArray(customers) ? customers.map(c => ({ value: c.id, label: c.name })) : [],
       required: true,
       attrs: {
-        disabled: customerLoading
-      }
+        disabled: customerLoading,
+      },
     },
     { name: 'customerOrderNo', label: 'Customer Order No.', type: 'text' as const },
     { name: 'customerName', label: 'Customer Name', type: 'text' as const },
@@ -193,7 +201,7 @@ export default function OrderCreateModal({
     { name: 'deliveryTime', label: 'Delivery Time', type: 'date' as const, required: true },
     { name: 'shippingMethod', label: 'Shipping Method', type: 'text' as const },
     { name: 'orderDate', label: 'Order Date', type: 'date' as const, required: true },
-    { name: 'remarks', label: 'Remarks', type: 'textarea' as const }
+    { name: 'remarks', label: 'Remarks', type: 'textarea' as const },
     // 这里暂不处理 packingDetails、orderItems、costItems 的表单字段，可以后续补充
   ];
 
@@ -217,7 +225,11 @@ export default function OrderCreateModal({
           fields={baseFields}
           onSubmit={handleSubmit}
           submitText="Create Order"
-        />
+        >
+          {/* 编辑明细 */}
+          <OrderItemEditor items={orderItems} onChange={setOrderItems} />
+          <CostItemEditor items={costItems} onChange={setCostItems} />
+        </GenericForm>
       </div>
     </GenericModal>
   );

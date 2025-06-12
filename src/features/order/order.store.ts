@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import * as api from './order.api';
-import { createResourceStore } from '@/lib/createResourceStore';
+import { createResourceStore } from '@/utils/createResourceStore';
 import {
   Order,
   CreateOrder,
