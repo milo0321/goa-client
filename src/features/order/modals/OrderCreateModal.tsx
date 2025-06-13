@@ -21,10 +21,10 @@ interface OrderCreateModalProps {
 }
 
 export default function OrderCreateModal({
-  isOpen,
-  onClose,
-  onSubmitSuccess,
-}: OrderCreateModalProps) {
+                                           isOpen,
+                                           onClose,
+                                           onSubmitSuccess,
+                                         }: OrderCreateModalProps) {
   const {
     items: customers,
     loading: customerLoading,
@@ -202,6 +202,22 @@ export default function OrderCreateModal({
     { name: 'shippingMethod', label: 'Shipping Method', type: 'text' as const },
     { name: 'orderDate', label: 'Order Date', type: 'date' as const, required: true },
     { name: 'remarks', label: 'Remarks', type: 'textarea' as const },
+    {
+      name: 'status',
+      label: 'Status',
+      type: 'select' as const,
+      required: true,
+      options: [
+        { value: 'draft', label: 'Draft' },
+        { value: 'sampling', label: 'Sampling' },
+        { value: 'sample_approved', label: 'SampleApproved' },
+        { value: 'mass_production', label: 'MassProduction' },
+        { value: 'ready_to_ship', label: 'ReadyToShip' },
+        { value: 'shipped', label: 'Shipped' },
+        { value: 'completed', label: 'Completed' },
+        { value: 'cancelled', label: 'Cancelled' },
+      ],
+    },
     // 这里暂不处理 packingDetails、orderItems、costItems 的表单字段，可以后续补充
   ];
 
@@ -221,7 +237,7 @@ export default function OrderCreateModal({
         {/* 表单区域 */}
         <GenericForm
           formRef={formRef}
-          initialData={{ orderDate: dayjs().toISOString() }}
+          initialData={{ orderDate: dayjs().toISOString(), status: 'draft' }}
           fields={baseFields}
           onSubmit={handleSubmit}
           submitText="Create Order"

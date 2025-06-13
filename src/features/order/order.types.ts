@@ -1,5 +1,15 @@
 import { BaseEntity } from '@/types/base';
 
+export type OrderStatus =
+  | 'draft'
+  | 'sampling'
+  | 'sample_approved'
+  | 'mass_production'
+  | 'ready_to_ship'
+  | 'shipped'
+  | 'completed'
+  | 'cancelled';
+
 export interface Order extends BaseEntity {
   id: string;
   orderNo: string;
@@ -12,8 +22,8 @@ export interface Order extends BaseEntity {
   deliveryTime: string; // ISO 格式的 UTC 时间
   shippingMethod: string;
   remarks?: string;
-  status?: string;
   packingDetails?: PackingDetail[];
+  status: OrderStatus;
   orderDate: string; // ISO 格式的 UTC 时间
   createdAt: string;
   updatedAt: string;
@@ -89,10 +99,10 @@ export interface CreateOrder {
   paymentTerms: string;
   deliveryTime: string; // ISO 格式
   shippingMethod: string;
-  orderDate: string; // ISO 格式
   remarks?: string;
-  status?: string;
   packingDetails?: PackingDetail[];
+  status: OrderStatus;
+  orderDate: string;
   orderItems: CreateOrderItem[];
   costItems?: CreateCostItem[];
 }
@@ -107,10 +117,10 @@ export interface UpdateOrder {
   paymentTerms?: string;
   deliveryTime?: string;
   shippingMethod?: string;
-  orderDate?: string;
   remarks?: string;
-  status?: string;
   packingDetails?: PackingDetail[];
+  status: OrderStatus;
+  orderDate: string;
   orderItems?: UpdateOrderItem[];
   costItems?: UpdateCostItem[];
 }
